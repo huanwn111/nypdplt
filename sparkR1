@@ -1,0 +1,19 @@
+# 加载SparkR包
+library(SparkR)
+# 初始化 Spark context
+sc <- sparkR.init(master="spark://集群ip:7077"
+                  ,sparkEnvir=list(spark.executor.memory="1g",spark.cores.max="10"))
+# 从HDFS上读取文件
+lines <- textFile(sc, "hdfs://集群ip:8020/tmp/sparkR_test.txt")
+# 按分隔符拆分每一行为多个元素，这里返回一个序列
+words<-flatMap(lines,function(line) {strsplit(line,"\\|")[[1]]})
+# 使用 lapply 来定义对应每一个RDD元素的运算，这里返回一个（K，V)对
+wordCount <-lapply(words, function(word) { list(word, 1L) })
+# 对（K，V）对进行聚合计算
+counts<-reduceByKey(wordCount,"+",2L)
+# 以数组的形式，返回数据集的所有元素
+output <- collect(counts)
+# 按格式输出结果
+for (wordcount in output) {
+  cat(wordcount[[1]], ": ", wordcount[[2]], "\n")
+}
