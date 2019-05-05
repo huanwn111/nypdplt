@@ -1,3 +1,6 @@
+#R统计词频与大数据spark
+#原理：切分为rdd 分布式并行计算返回k_v组再聚和输出
+# 加载SparkR包
 # 加载SparkR包
 library(SparkR)
 # 初始化 Spark context
@@ -17,3 +20,6 @@ output <- collect(counts)
 for (wordcount in output) {
   cat(wordcount[[1]], ": ", wordcount[[2]], "\n")
 }
+
+#sparkR安装配置参考：
+#https://www.cnblogs.com/payton/p/4227770.html
