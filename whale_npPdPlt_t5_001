@@ -1,0 +1,795 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Task5"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#8章 数据规整：聚合、合并和重朔\n",
+    "import pandas as pd\n",
+    "import numpy as np"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0    0.926765\n",
+      "1    2.489379\n",
+      "2    1.367441\n",
+      "3   -0.332481\n",
+      "4   -0.082008\n",
+      "5   -0.447932\n",
+      "6    0.634340\n",
+      "7   -0.783799\n",
+      "8   -1.594907\n",
+      "dtype: float64\n"
+     ]
+    }
+   ],
+   "source": [
+    "#层次化索引--可用于低维度形式处理高维度数据\n",
+    "data = pd.Series(np.random.randn(9))\n",
+    "print(data)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "一季度  1    1.849243\n",
+      "     2   -1.261124\n",
+      "二季度  1   -1.275148\n",
+      "     2    0.672878\n",
+      "     3    0.074468\n",
+      "三季度  1    1.637983\n",
+      "     2   -0.872412\n",
+      "四季度  1    0.520260\n",
+      "     2   -0.453661\n",
+      "dtype: float64\n"
+     ]
+    }
+   ],
+   "source": [
+    "#加两层结构化索引\n",
+    "data = pd.Series(np.random.randn(9),index=[\n",
+    "    ['一季度','一季度','二季度','二季度','二季度','三季度','三季度','四季度','四季度'],\n",
+    "    [1,2,1,2,3,1,2,1,2]\n",
+    "])\n",
+    "#上面加了MultiIndex多重索引【注意，同一组的想合并的要挨着，不挨着的不会自动合并】\n",
+    "print(data)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "MultiIndex(levels=[['一季度', '三季度', '二季度', '四季度'], [1, 2, 3]],\n",
+      "           codes=[[0, 0, 2, 2, 2, 1, 1, 3, 3], [0, 1, 0, 1, 2, 0, 1, 0, 1]])\n"
+     ]
+    }
+   ],
+   "source": [
+    "#如何使用上面的层次化多级索引取数据\n",
+    "print(data.index)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1    1.849243\n",
+      "2   -1.261124\n",
+      "dtype: float64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(data['一季度'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "一季度  1    1.849243\n",
+      "     2   -1.261124\n",
+      "三季度  1    1.637983\n",
+      "     2   -0.872412\n",
+      "dtype: float64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(data[[\"一季度\",\"三季度\"]])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#print(data[\"一季度\":\"三季度\"])\n",
+    "#报错：待调'Key length (1) was greater than MultiIndex lexsort depth (0)'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>1</th>\n",
+       "      <th>2</th>\n",
+       "      <th>3</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>一季度</th>\n",
+       "      <td>1.849243</td>\n",
+       "      <td>-1.261124</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>三季度</th>\n",
+       "      <td>1.637983</td>\n",
+       "      <td>-0.872412</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>二季度</th>\n",
+       "      <td>-1.275148</td>\n",
+       "      <td>0.672878</td>\n",
+       "      <td>0.074468</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>四季度</th>\n",
+       "      <td>0.520260</td>\n",
+       "      <td>-0.453661</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "            1         2         3\n",
+       "一季度  1.849243 -1.261124       NaN\n",
+       "三季度  1.637983 -0.872412       NaN\n",
+       "二季度 -1.275148  0.672878  0.074468\n",
+       "四季度  0.520260 -0.453661       NaN"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#把上面的一维表两维的series放到二维的DataFrame中，【用unstack()解开】\n",
+    "data.unstack()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "一季度  1    1.849243\n",
+       "     2   -1.261124\n",
+       "三季度  1    1.637983\n",
+       "     2   -0.872412\n",
+       "二季度  1   -1.275148\n",
+       "     2    0.672878\n",
+       "     3    0.074468\n",
+       "四季度  1    0.520260\n",
+       "     2   -0.453661\n",
+       "dtype: float64"
+      ]
+     },
+     "execution_count": 27,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#再堆起来，stack()【拿到任一个二维DF都可以用.stack()变成这种一维表示的】\n",
+    "data.unstack().stack()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "   0   1   2\n",
+      "0  0   1   2\n",
+      "1  3   4   5\n",
+      "2  6   7   8\n",
+      "3  9  10  11\n"
+     ]
+    }
+   ],
+   "source": [
+    "#dataFrame也可以有多层索引\n",
+    "df = pd.DataFrame(np.arange(12).reshape((4,3)))\n",
+    "print(df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "      0   1   2\n",
+      "一班 1  0   1   2\n",
+      "二班 1  3   4   5\n",
+      "   2  6   7   8\n",
+      "三班 1  9  10  11\n"
+     ]
+    }
+   ],
+   "source": [
+    "df = pd.DataFrame(np.arange(12).reshape((4,3)),\n",
+    "                 index=[\n",
+    "                     ['一班','二班','二班','三班'],\n",
+    "                     [1,1,2,1]\n",
+    "                 ])\n",
+    "print(df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "     单科      总分\n",
+      "     数学  语文   -\n",
+      "一班 1  0   1   2\n",
+      "二班 1  3   4   5\n",
+      "   2  6   7   8\n",
+      "三班 1  9  10  11\n"
+     ]
+    }
+   ],
+   "source": [
+    "#列也可以结构化多层次索引\n",
+    "df = pd.DataFrame(np.arange(12).reshape((4,3)),\n",
+    "                 index=[\n",
+    "                     ['一班','二班','二班','三班'],\n",
+    "                     [1,1,2,1]\n",
+    "                 ],\n",
+    "                 columns=[\n",
+    "                     ['单科','单科','总分'],\n",
+    "                     ['数学','语文','-']\n",
+    "                 ])\n",
+    "print(df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "整体看       单科      总分\n",
+      "看单科       数学  语文   -\n",
+      "班级名称 小组名称           \n",
+      "一班   1     0   1   2\n",
+      "二班   1     3   4   5\n",
+      "     2     6   7   8\n",
+      "三班   1     9  10  11\n"
+     ]
+    }
+   ],
+   "source": [
+    "#各层索引也可以加名称标题\n",
+    "df.index.names = ['班级名称','小组名称']#给行索引命名\n",
+    "df.columns.names = ['整体看','看单科']#给列索引命名\n",
+    "print(df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>看单科</th>\n",
+       "      <th>数学</th>\n",
+       "      <th>语文</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>班级名称</th>\n",
+       "      <th>小组名称</th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>一班</th>\n",
+       "      <th>1</th>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th rowspan=\"2\" valign=\"top\">二班</th>\n",
+       "      <th>1</th>\n",
+       "      <td>3</td>\n",
+       "      <td>4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>6</td>\n",
+       "      <td>7</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>三班</th>\n",
+       "      <th>1</th>\n",
+       "      <td>9</td>\n",
+       "      <td>10</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "看单科        数学  语文\n",
+       "班级名称 小组名称        \n",
+       "一班   1      0   1\n",
+       "二班   1      3   4\n",
+       "     2      6   7\n",
+       "三班   1      9  10"
+      ]
+     },
+     "execution_count": 50,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#取出上面数据\n",
+    "df['单科']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#创建可复用的多层索引，用MultiIndex\n",
+    "#MultiIndex.from_arrays([['单科','总分'],['数学','语文','-']],names = ['整体看','看单科'])\n",
+    "#报错 待查 name 'MultiIndex' is not defined"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead tr th {\n",
+       "        text-align: left;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead tr:last-of-type th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr>\n",
+       "      <th></th>\n",
+       "      <th>整体看</th>\n",
+       "      <th colspan=\"2\" halign=\"left\">单科</th>\n",
+       "      <th>总分</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th></th>\n",
+       "      <th>看单科</th>\n",
+       "      <th>数学</th>\n",
+       "      <th>语文</th>\n",
+       "      <th>-</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>小组名称</th>\n",
+       "      <th>班级名称</th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th rowspan=\"2\" valign=\"top\">1</th>\n",
+       "      <th>一班</th>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>二班</th>\n",
+       "      <td>3</td>\n",
+       "      <td>4</td>\n",
+       "      <td>5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <th>二班</th>\n",
+       "      <td>6</td>\n",
+       "      <td>7</td>\n",
+       "      <td>8</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <th>三班</th>\n",
+       "      <td>9</td>\n",
+       "      <td>10</td>\n",
+       "      <td>11</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "整体看       单科      总分\n",
+       "看单科       数学  语文   -\n",
+       "小组名称 班级名称           \n",
+       "1    一班    0   1   2\n",
+       "     二班    3   4   5\n",
+       "2    二班    6   7   8\n",
+       "1    三班    9  10  11"
+      ]
+     },
+     "execution_count": 54,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#重排与分级排序\n",
+    "#重排，交换分类层次，用swaplevel\n",
+    "df.swaplevel('班级名称','小组名称')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 62,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead tr th {\n",
+       "        text-align: left;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead tr:last-of-type th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr>\n",
+       "      <th></th>\n",
+       "      <th>整体看</th>\n",
+       "      <th colspan=\"2\" halign=\"left\">单科</th>\n",
+       "      <th>总分</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th></th>\n",
+       "      <th>看单科</th>\n",
+       "      <th>数学</th>\n",
+       "      <th>语文</th>\n",
+       "      <th>-</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>班级名称</th>\n",
+       "      <th>小组名称</th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>一班</th>\n",
+       "      <th>1</th>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>三班</th>\n",
+       "      <th>1</th>\n",
+       "      <td>9</td>\n",
+       "      <td>10</td>\n",
+       "      <td>11</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th rowspan=\"2\" valign=\"top\">二班</th>\n",
+       "      <th>1</th>\n",
+       "      <td>3</td>\n",
+       "      <td>4</td>\n",
+       "      <td>5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>6</td>\n",
+       "      <td>7</td>\n",
+       "      <td>8</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "整体看       单科      总分\n",
+       "看单科       数学  语文   -\n",
+       "班级名称 小组名称           \n",
+       "一班   1     0   1   2\n",
+       "三班   1     9  10  11\n",
+       "二班   1     3   4   5\n",
+       "     2     6   7   8"
+      ]
+     },
+     "execution_count": 62,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.swaplevel('班级名称','小组名称')\n",
+    "#排序\n",
+    "#整体排 sort_index()\n",
+    "df.sort_index(level=1)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 69,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead tr th {\n",
+       "        text-align: left;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead tr:last-of-type th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr>\n",
+       "      <th></th>\n",
+       "      <th>整体看</th>\n",
+       "      <th colspan=\"2\" halign=\"left\">单科</th>\n",
+       "      <th>总分</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th></th>\n",
+       "      <th>看单科</th>\n",
+       "      <th>数学</th>\n",
+       "      <th>语文</th>\n",
+       "      <th>-</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>小组名称</th>\n",
+       "      <th>班级名称</th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th rowspan=\"3\" valign=\"top\">1</th>\n",
+       "      <th>一班</th>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>三班</th>\n",
+       "      <td>9</td>\n",
+       "      <td>10</td>\n",
+       "      <td>11</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>二班</th>\n",
+       "      <td>3</td>\n",
+       "      <td>4</td>\n",
+       "      <td>5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <th>二班</th>\n",
+       "      <td>6</td>\n",
+       "      <td>7</td>\n",
+       "      <td>8</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "整体看       单科      总分\n",
+       "看单科       数学  语文   -\n",
+       "小组名称 班级名称           \n",
+       "1    一班    0   1   2\n",
+       "     三班    9  10  11\n",
+       "     二班    3   4   5\n",
+       "2    二班    6   7   8"
+      ]
+     },
+     "execution_count": 69,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.swaplevel(0,1).sort_index(level=0)#【按0层排序还是按1层排？】\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#根据级别汇总统计====》》》图6817====\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.8"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
