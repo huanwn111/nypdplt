@@ -1,0 +1,73 @@
+SAS/macro宏
+
+[运行可用右键快捷菜单]
+%let year=2023/*定义宏变量 注意，定义宏没有引号，加引号会当成值，代码中使用 &year*/
+Data tbl&year;
+set db.tbl;/*?合并数据表*/
+If year = &year:
+Run;
+
+Proc print data=tbl&year;/*打印数据表*/
+Title ‘&year销售’;/*加title 注意没有等号，不是定义变量，是title语句设置*/
+Footnote1 ‘&year年创建’;/*加脚标 注意没有等号*/
+Footnote2 ‘系统使用sas9.4’/*加脚标*/
+
+【定义宏变量】：
+使用%let name = v
+在data步定义
+在SQL语言中定义
+
+调用宏变量：
+& name
+
+查看宏：
+&put &name
+
+宏变量的分类：
+系统宏为量sysdata、sysday；
+用户自定义宏变量；
+
+【宏函数(函数模块)】：
+定义%sysfunc
+调用&sysfunc
+
+【宏程序】
+%macro 宏名称 
+宏文本 
+%mend 宏名称;
+
+调用% 宏名称
+
+例：调用系统时间的宏
+OPTIONS MCOMPILENOTE = ALL; 选项设置 //保存宏
+%macro time;                                                                                                                            
+   %put the current time is %sysfunc(time(),timeampm);                                                                                               
+%mend time;                                                                                                                             
+%time                                                                                                                                   
+
+【宏参数】括号中定度形参，使用&参数名
+%macro fn1(dsn,vars);
+Proc means data=&dsn;
+Var &vars;
+Run;
+%mend fn1;
+
+使用 
+%fn1(10,7)
+或，
+%let dsn=data1
+%let vars=var1
+%fn1(data1,var1)
+
+
+例：
+定义
+%macro count(opts,start,stop);
+proc freq data=db.tbl;
+where year between &start and &stop;
+table product_line/&opts;
+run;
+%mend count;
+
+使用
+%count(nocum,1999,2000)
