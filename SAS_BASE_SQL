@@ -1,0 +1,566 @@
+SAS SQL
+
+一、【SAS SQL基本】
+1.1、/*查询出某表中的几列，并加一个新列，存入计划后的值*/
+prco sql;                                                                                                                                                                                       
+title '查询并加新列';                                                                                                                                                                           
+select cars.make,cars.model,cars.msrp,cars.msrp*0.6 as newCol                                                                                                                                   
+from sashelp.cars;                                                                                                                                                                              
+quit; 
+
+1.2、去重 Select distinct去重 cars.make....
+
+1.3、条件 Select ...from cars Where msrp<=4000;/*where条件*/
+
+1.4、排序 Order by排序，默认升，降desc
+Select....where...order by msrp,make desc;/*首选msrp升序，次排make降*/
+
+1.5、分组汇总 Group by 分组 汇总
+计算不同厂商的个数
+proc sql;                                                                                                                                                                                       
+select count(distinct make) as number_of_maker                                                                                                                                                  
+from sashelp.cars;                                                                                                                                                                              
+quit; 
+
+计算每个汔车生产商所有车型（以厂商分组汇总）建议零售价的平均值，按均值升序
+proc sql;                                                                                                                                                                                       
+select make, avg(msrp) as avgprice                                                                                                                                                              
+from sashelp.cars                                                                                                                                                                               
+group by make                                                                                                                                                                                   
+order by calculated avgprice;                                                                                                                                                                   
+quit;
+
+1.6、条件 Having 选择满足特定条件的行，
+与where的区别：having 用于group by 之后的筛选
+
+计算每个厂商所有车型建议零售价的均值，输出均值小于20000的行，以厂商字母排序
+proc sql;                                                                                                                                                                                       
+select make, avg(msrp) as avgprice                                                                                                                                                              
+from sashelp.cars                                                                                                                                                                               
+group by make                                                                                                                                                                                   
+having avgprice<=20000                                                                                                                                                                          
+order by make;                                                                                                                                                                                  
+quit;                                                                                                                                                                                           
+
+二、【sql对报表加工和生成数据集】     
+2.1、outobs控制输出条目 
+读表，输入不同厂商和汽车型号组合的前10个
+proc sql outobs=10 number;/*outobs控制输出条目*/                                                                                        
+title '表';                                                                                                                             
+select distinct cars.make,cars.model                                                                                                    
+from sashelp.cars;                                                                                                                      
+quit; 
+
+2.2、存入新表 create table ...as select .... from...
+
+proc sql outobs=10 number;/*outobs控制输入条目*/                                                                                        
+title '表';
+/*建表 as 查询结果*/                                                                                                                             
+create table work.first_ten_ph as                                                                                                       
+select distinct cars.make,cars.model                                                                                                    
+from sashelp.cars;                                                                                                                      
+quit; 
+
+2.3、子查询 查询语句嵌套 select ...from表一...having或where ...条件 (select ... from 表二)
+
+/*建一个测试数据集*/
+data spending;                                                                                                                          
+input id max_spending;                                                                                                                  
+datalines;                                                                                                                              
+1 10000                                                                                                                                 
+2 20000                                                                                                                                 
+3 24000                                                                                                                                 
+4 30000                                                                                                                                 
+5 14000                                                                                                                                 
+;                                                                                                                                       
+run;
+
+生成一个报表，要求平均建议零售价不超过我上面做的报表的max_spending的均值的汔车制作商
+proc sql;                                                                                                                               
+title '表';                                                                                                                             
+create table work.spendin_new_ph as                                                                                                     
+select cars.make,avg(cars.msrp) as avgprice                                                                                             
+from sashelp.cars                                                                                                                       
+group by cars.make                                                                                                                      
+having avg(cars.msrp) <= (select avg(max_spending) from work.spending);                                                                 
+quit; 
+
+2.4、上面是列不相关，相互比较，下面是列相关not in和 not exists()
+
+新建一个表一包含捐赠人姓名和额度，表二包含今年 的捐赠人
+输出不是今年捐赠的人，
+Data work.Donors;
+Input name$ amount;
+Datalines:
+John 5000
+Chirs 10000
+Peter 7000
+Paul 6500
+Lily 2500
+;
+Run;
+
+Data work.Donorsthisyear;
+Input name$;
+Datalines:
+Peter
+Lily
+;
+Run;
+
+proc sql;                                                                                                                               
+title "rs表不是今年捐赠的";                                                                                                             
+create table rs_donors_ph as                                                                                                            
+select * from Work.Donors                                                                                                               
+Where Donors.name not in (select name from Work.Donorsthisyear);                                                                        
+quit;
+
+/*或用not exists(条件在二表查询中，上面是条件在一表查询中)*/
+proc sql;                                                                                                                               
+title "rs表不是今年捐赠的";                                                                                                             
+create table rs_donors_ph2 as                                                                                                           
+select * from Work.Donors                                                                                                               
+Where not exists (select name from Work.Donorsthisyear where name=Donors.name);                                                         
+quit;  
+
+create table rs_donors_ph2 as不加则输出到输出窗口
+
+2.5、【表合并】
+2.5.1【数据值（行）合并】：两表交合集（内连表变少）、两表并集（并入左左 并入右表 全合并） （外连表变大）
+
+内连接 交集
+
+表一 包含学生姓名 性别 年龄 身高，表二包含 学生姓名和体重
+生成一个报表，仅输出两个表中都出现的行。
+
+建两个表
+Data work.class;
+Input name$ sex$ age height;
+Datalines;
+Alice F 12 163
+Carol F 14 155
+James M 12 170
+;
+Run;
+
+Data work.classfit;
+Input student_name$ weight;
+Datalines;
+James 83
+Carol 102.5
+;
+Run;
+
+proc sql;                                                                                                                               
+title '表';                                                                                                                             
+select c.name,c.sex,c.age,c.height,c2.weight                                                                                            
+from work.class as c,work.classfit as c2                                                                                                
+where c.name = c2.student_name;                                                                                                         
+quit;  
+
+输出了名字都有的交集，内连接，新表包含全部列，要哪列就显示哪列，交集指的行交这里
+
+ 									sex            age   	 height    	weight
+                                ------------------------------------------------
+                                Carol     F               14      155     102.5
+                                James     M               12      170        83
+
+外连接，并集
+left join
+right join
+full join
+
+建两个表
+data work.a;                                                                                                                            
+        input x v1$;                                                                                                                    
+        datalines;                                                                                                                      
+        1 a                                                                                                                             
+        2 b                                                                                                                             
+        3 d                                                                                                                             
+        ;                                                                                                                               
+run;                                                                                                                                    
+                                                                                                                                        
+data work.b;                                                                                                                            
+        input x v2$;                                                                                                                    
+        datalines;                                                                                                                      
+        2 x                                                                                                                             
+        3 c                                                                                                                             
+        4 v                                                                                                                             
+        ;                                                                                                                               
+run;     
+
+proc sql;                                                                                                                               
+select * from a left join b                                                                                                             
+on a.x = b.x;                                                                                                                           
+quit;   
+
+Left join结果，左表的全部和右表包含（x值）的部分
+                                            x  v1               x  v2
+                                     --------------------------------------
+                                            1  a                .
+                                            2  b                2  x
+                                            3  d                3  c
+
+Right join结果，右表的全部和左边包含（x值）的部分
+
+proc sql;                                                                                                                               
+select * from a right join b                                                                                                            
+on a.x = b.x;                                                                                                                           
+quit; 
+                                            x  v1               x  v2
+                                     --------------------------------------
+                                            2  b                2  x
+                                            3  d                3  c
+                                            .                   4  v
+
+
+Full join结果，两表全包含（x值）的并集
+
+proc sql;                                                                                                                               
+select * from a right join b                                                                                                            
+on a.x = b.x;                                                                                                                           
+quit; 
+
+                                            x  v1               x  v2
+                                     --------------------------------------
+                                            1  a                .
+                                            2  b                2  x
+                                            3  d                3  c
+                                            .                   4  v
+
+
+2.5.2【纵向合并】except 左表去重，排除掉右表中包含的，列名用左表的
+
+建两个表，
+data work.a;                                                                                                                            
+        input ID X$;                                                                                                                    
+        datalines;                                                                                                                      
+        1 a                                                                                                                             
+        1 b                                                                                                                             
+        1 c                                                                                                                             
+        1 a                                                                                                                             
+        2 b                                                                                                                             
+        ;                                                                                                                               
+run;                                                                                                                                    
+data work.b;                                                                                                                            
+        input ID Y$;                                                                                                                    
+        datalines;                                                                                                                      
+        1 b                                                                                                                             
+        2 b                                                                                                                             
+        3 c                                                                                                                             
+        3 c                                                                                                                             
+        4 d                                                                                                                             
+        ;                                                                                                                               
+run; 
+
+proc sql;                                                                                                                               
+title '纵合并表';                                                                                                                       
+select * from a                                                                                                                         
+except                                                                                                                                  
+select * from b                                                                                                                         
+;                                                                                                                                       
+quit;
+
+结果
+                                                     ID  X
+                                               ------------------
+                                                      1  a
+                                                      1  c
+
+Except all 不给左表去重，会包含重复的
+
+Except corr 对列名合并,删除不同时在两表中的列，即，保留两表中都有的列
+
+proc sql;                                                                                                                               
+title '纵合并表';                                                                                                                       
+create table temp_ph as                                                                                                                 
+select * from a                                                                                                                         
+except corr                                                                                                                             
+select * from b                                                                                                                         
+;                                                                                                                                       
+quit;   
+结果
+只有ID列 空值
+
+except corr all不去重
+结果
+                                                          ID
+                                                    --------
+                                                           1
+                                                           1
+                                                           1
+
+
+Intersect对表纵向合并
+
+建两个表：
+data work.a;                                                                                                                            
+input ID X$;                                                                                                                            
+datalines;                                                                                                                              
+1 a                                                                                                                                     
+1 a                                                                                                                                     
+2 b                                                                                                                                     
+3 c                                                                                                                                     
+;                                                                                                                                       
+run;                                                                                                                                    
+data work.b;                                                                                                                            
+input ID Y$;                                                                                                                            
+datalines;                                                                                                                              
+1 a                                                                                                                                     
+1 b                                                                                                                                     
+3 c                                                                                                                                     
+3 d                                                                                                                                     
+;                                                                                                                                       
+run; 
+
+intersect
+
+proc sql;                                                                                                                               
+select * from a                                                                                                                         
+        intersect                                                                                                                       
+select * from b                                                                                                                         
+;                                                                                                                                       
+quit;
+
+                                                     ID  X
+                                               ------------------
+                                                      1  a
+                                                      3  c
+intersect all 
+
+proc sql;                                                                                                                               
+select * from a                                                                                                                         
+        intersect all                                                                                                                   
+select * from b                                                                                                                         
+;                                                                                                                                       
+quit;    
+
+                                                     ID  X
+                                               ------------------
+                                                      1  a
+                                                      3  c
+
+intersect corr
+
+proc sql;                                                                                                                               
+select * from a                                                                                                                         
+        intersect corr                                                                                                                  
+select * from b                                                                                                                         
+;                                                                                                                                       
+quit;
+
+                                                          ID
+                                                    --------
+                                                           1
+                                                           3
+
+Union
+
+proc sql;                                                                                                                               
+select * from a                                                                                                                         
+        union                                                                                                                           
+select * from b                                                                                                                         
+;                                                                                                                                       
+quit; 
+goptions reset=all;/*输出窗口恢复默认选项，清除上一步重新渲染*/  
+
+结果：
+                                                     ID  X
+                                               ------------------
+                                                      1  a
+                                                      1  b
+                                                      2  b
+                                                      3  c
+                                                      3  d
+
+union all 不去重
+
+                                                     ID  X
+                                               ------------------
+                                                      1  a
+                                                      1  a
+                                                      2  b
+                                                      3  c
+                                                      1  a
+                                                      1  b
+                                                      3  c
+                                                      3  d
+
+
+Union corr 共同列
+
+                                                          ID
+                                                    --------
+                                                           1
+                                                           2
+ union all corr
+
+                                                         ID
+                                                    --------
+                                                           1
+                                                           1
+                                                           2
+                                                           3
+                                                           1
+                                                           1
+                                                           3
+                                                           3                                             3
+
+【几种比较】except 取并集排除交差，intersect取交集，union 取并集
+
+
+
+三、【管理表】
+查看表结构、复制、创建、删除表、行列操作
+
+3.1查看表结构describe table ...
+
+proc sql;                                                                                                                               
+describe table sashelp.class;                                                                                                           
+run;  
+
+3.2复制表 data 新表; set 旧表 
+
+data work.class_copy_ph;                                                                                                                
+set sashelp.class;                                                                                                                      
+run;  
+
+3.3创建表create table表名 as
+
+proc sql;                                                                                                                               
+create table work.class_copy2_ph as                                                                                                     
+select * from sashelp.class;                                                                                                            
+quit;                                                                                                                                    
+
+用Create table 表名(列名 字段类型 字段名。。。)
+
+Proc sql;                                                                                                                               
+Create table work.ph_new_tbl(label='创建表-工资单' bufsize=60000)                                                                       
+(                                                                                                                                       
+Name char(12) label='姓名',                                                                                                             
+Sex char(4) label='性别',                                                                                                               
+Age num label='年龄',                                                                                                                   
+Salary num label='工资'                                                                                                                 
+);                                                                                                                                      
+quit; 
+
+用create table 表名 like 已有表
+proc sql;                                                                                                                               
+create table work.ph_2like                                                                                                              
+like sashelp.class;                                                                                                                     
+run;                                                                                                                                    
+
+/*建出来是空表，describe查看结构和class表一样*/                                                                                                                                        
+proc sql;                                                                                                                               
+describe table work.ph_2like;                                                                                                           
+quite; 
+
+3.4 删除表 drop table 表名 慎用
+
+proc sql;                                                                                                                               
+drop table ph_2like;                                                                                                                    
+run; 
+
+3.5 使用sql插入行 insert into 表名 set 字段名=值 set 字段名=值;
+
+proc sql;                                                                                                                               
+insert into work.Temp_ph                                                                                                                
+set ID=30                                                                                                                               
+set ID=50                                                                                                                               
+set ID=70                                                                                                                               
+;  
+select * from work.Temp_ph;                                                                                                                                       
+quit;                                                                                                                                   
+
+用insert into 表名(字段名,字段名,字段名)values(值,值,值)
+proc sql;                                                                                                                               
+                                                                                                                                        
+insert into work.Temp_ph(ID)                                                                                                            
+values(90)                                                                                                                              
+values(80)                                                                                                                              
+;                                                                                                                                       
+select * from work.Temp_ph;                                                                                                             
+run;         
+
+/*先看下要插入的表结构 describe table ...*/
+proc sql;                                                                                                                               
+describe table work.Ph_new_tbl;                                                                                                         
+quit;                                                                                                                                   
+                                                                                                                                        
+proc sql;                                                                                                                               
+
+/*insert into 表(字段) values(值)*/                                                                                                                                        
+insert into work.Ph_new_tbl(Name,Sex,Age,Salary)                                                                                        
+values('李小','男',23,9000)                                                                                                             
+values('王王','女',45,19000)                                                                                                            
+;                                                                                                                                       
+select * from work.Ph_new_tbl;                                                                                                          
+run; 
+
+将查询结果作为新行插入到一个新表中，两表中有相同列，把一个表中的age=12的行插入到另一个表中
+例：Classfit共10列，其中5列与class_copy_ph里相同，name sex age height weight，现要将classfit中的所有age=12的行插入到class_copy_ph中
+思路：把classfit中查到的满足条件的结果集，insert到新表class_copy_ph中
+Insert into 新表 select 旧表中要插入的字段查询 from旧表 where条件
+
+proc sql;                                                                                                                               
+insert into work.class_copy_ph                                                                                                          
+select name,sex,age,weight,height                                                                                                       
+from sashelp.classfit                                                                                                                   
+where age=12;                                                                                                                           
+select * from work.class_copy_ph;/*此步用于临时查看下做好的新表，或去表中查看*/                                                         
+quit; 
+
+3.6 使用SQL删除部分行delete from 表名
+
+例：复制表sashelp.class为work.class，计算work.class中的体重身高比，删去所有比值大于1.5的行
+思路初步：复制表data 新表; set 旧表 where delete from select 列，列，新列 体重/身高 where 新列>1.5
+思路修改：分两步，新创建好表，再处理表，
+复制表create table 新表 as select ...from 旧表，delete from 表 where 体重/身高>2.5
+
+/*复制建新表*/
+proc sql;                                                                                                                                                                                                                                                       
+create table work.class as                                                                                                                                                                                                                                      
+select * from sashelp.class;                                                                                                                                                                                                                                    
+quit; 
+
+/*删除某条年的记录*/
+proc sql;                                                                                                                                                                                                                                                       
+delete from work.class                                                                                                                                                                                                                                          
+where (class.weight/class.height)>1.5;/*这里比较符的两端除也加了括号*/                                                                                                                                                                                                                          
+quit; 
+
+3.7 修改表的列 
+加add 
+删drop（删行是delete 删列是drop）
+改modify 
+
+例，修改class_copy_ph中的列，删age sex 新增student_id数值型 boarding字符型 改height格式“8.1”，标签“modifiedheight”
+
+alter table 表
+Add 列名，，，
+Drop 列名，                                                                                                                            
+Modify 列名 
+
+proc sql;                                                                                                                                                                                                                                                       
+alter table work.class_copy_ph                                                                                                                                                                                                                                  
+add student_id num format=4.,                                                                                                                                                                                                                                   
+    boarding char(1)                                                                                                                                                                                                                                            
+drop age,sex                                                                                                                                                                                                                                                    
+modify height format=8.1 label='modifiedheight';                                                                                                                                                                                                                
+quit;              
+
+
+3.8 表更新，修改行记录 update（修改列用modify）
+Update 表 set 字段名=字段名变化 where条件
+
+proc sql;                                                                                                                                                                                                                                                       
+update work.class                                                                                                                                                                                                                                               
+set height=(height+100),weight=(weight+100) where age in (11,12); /*改年龄11 12之间的数据*/                                                                                                                                                                     
+update work.class                                                                                                                                                                                                                                               
+set height=(height+200),weight=(weight+200) where are in (13,14);  /*改年龄11 12之间的数据*/                                                                                                                                                                    
+update work.class                                                                                                                                                                                                                                               
+set age=age+1;/*改年龄*/                                                                                                                                                                                                                                        
+quit;                                                                                                                                                                                                                                                           
+            
+
+使用set case代码等价处理上面需求
