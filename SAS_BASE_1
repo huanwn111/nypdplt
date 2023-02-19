@@ -1,0 +1,813 @@
+                                             SAS_BASE 基础案例
+
+1、【写一段程序】
+
+Data test; 创建数据集
+Input name$ sex$ id; 定义变量 字符型加$
+Cards;
+张三 男 01
+李小 女 02
+王方 男 04
+;
+Run;
+
+右键提交
+F3提交
+小人提交
+菜单提交
+
+/*注释*/
+Ctrl+/
+
+帮助-》sas产品-》SAS命令
+-》TTEST 等看示例
+
+2、【创建逻辑库】
+左侧资源管理器，右键创建
+代码创建
+菜单创建
+
+代码 
+libname sasDb ‘D:\sas’;建逻辑库
+Data sasDb.tbl;建表
+Input x y;
+Cards:
+1 2 3
+4 5 6
+;
+Run;
+
+3、【外部导入数据】
+Data test2;
+Infile ‘D:\data\test.text’; 打开外部文件
+Input name$ sex$ id; 定义变量
+Put name=”张三” data=”test2”; 在日志中输出
+
+Proc print data = test2; 打印出来
+Run;
+
+左侧栏 结果 查看产出结果
+菜单 保存
+
+title=”成绩统计”; 设置标题
+data d1;
+Input math english chemistry physics;
+avg=(math+english+chemistry+physics)/4;
+cards;
+10 30 10 23
+21 34 42 56
+;
+run;
+
+proc print;
+run;
+
+proc sort data=d1;by descending avg; 降序排序，不加descending 默认升序
+
+proc print;
+run;
+
+4、【指针】行 @@转行，取两个变量，其它转行，两列排下
+
+Data d2;
+Input name$ price @@;  
+Cards;
+香蕉 2.8 苹果 3.5
+；
+Run;
+
+5、【变量长度】变量 起索引-止索引
+Data test4;
+Input city$1-10 zip 12-17; 
+*第一列长度10，后面截掉了 1-10index 第二列12-17,默认8，长的字符要定义下。
+Cards;
+Birmingcharm 3521
+Montgmofjdhfj 12324
+Mobile 3320
+;
+Run;
+
+length city$ 20;
+*可以用length指定字符长度
+
+data test5;                                                                                                                             
+length city$ 3;                                                                                                                         
+input city$ number;                                                                                                                     
+put city=number; 在日志窗口打印                                                                                                                       
+cards;                                                                                                                                  
+abjkjkjkjklj      52424                                                                                                                 
+adfafasfasssdgdg  12442                                                                                                                 
+afgsgg            121                                                                                                                   
+;                                                                                                                                       
+run;
+
+右键列描述中设置字符长度
+
+6、【导入外部文件】 infile 外部路径 delimiter  //查看日志窗口修改报错
+Data work.ph_TempOutFile; /*新建表*/                                                                                                                                                                                                                                      
+Infile 'D:\SASFile\file_t1.dat' delimiter=',';/*指定分隔符*/                                                                                                                                                                                                    
+Input x y@@;/*定义表两列名*/                                                                                                                                                                                                                                                    
+Put x= y=;/*在日志窗口打印*/                                                                                                                                                                                                                                    
+Run;                                                                                                                                                                                                                                                            
+
+文件是 1,2,3,4,5,6这样。输出结果打印
+x=1 y=2
+x=3 y=4
+x=5 y=6
+
+ph_TempOutFile表结果
+x y
+1 2
+3 4
+5 6
+
+                                                                                                                           
+7、【put】
+
+data;                                                                                                                                   
+x=2;/*给表格定义列名 前面要加input，只打印不需要加*/                                                                                                                                    
+y=2*x;                                                                                                                                  
+put x y;/*输出了 x y值*/                                                                                                                                
+put x=; /*输出带变量名x*/                                                                                                                                
+put y=;                                                                                                                                 
+put x 2-5;/*在第日志2-5列输入变量值*/                                                                                                                              
+run; 
+
+结果在日志窗口输出如下：
+2 4
+x=2
+y=4
+   2
+
+8、【在输出窗口打印file print】【一个循环】,【output结果输出到数据集表格】
+file print;/*file print 指定put的值在输出窗口输出结果*/
+
+/*在输出窗口打印一个循环*/                                                                                                              
+data test8;                                                                                                                             
+file print;                                                                                                                             
+do i=1 to 5 by 1;                                                                                                                       
+x=i*2; 
+label i="col1" x="第二列";/*加标签，修改表列名*/                                                                                                                                 
+put i= x=;
+output;/*加output是把数据输出以数据集中，不加只存最后一组循环值*/                                                                                                                              
+end;                                                                                                                               
+run;
+
+结果：
+i=1 x=2
+i=2 x=4
+i=3 x=6
+i=4 x=8
+i=5 x=10
+
+表中：
+col1 第二列
+1    2
+2    4
+3    6
+4    8
+5    10
+
+9、【label】字段名设置别名标签 input x; label x=”列名”
+Data test9;
+Length city$ 10;
+Input city$ number;
+label city=”城市” number=”邮政编码”
+Cards;
+北京 100098
+黑龙江 150600
+...    ...
+;
+Run;
+
+10、【keep保留列、drop删除列、set复制表结构】
+Input x y z;
+Keep x y;/*删除z，或用drop z 等同*/
+
+set复制表结构，
+
+/*【set 结合keep drop使用】把sashelp.class表中选中name sex列，复制到work.tbl中*/
+Data work.tbl;
+Set sashelp.class(keep=name sex);
+Run;
+
+同时输出两个数据集（表） 空格间格开
+
+Data work.ph_d1(keep=name) work.ph_d2(keep=name sex);                                                                                                                                                                                                           
+Set sashelp.class(keep=name sex);                                                                                                                                                                                                                               
+Run;  
+
+列名重命名 rename=(旧名=新名 旧名2=新名2)
+                                                                                                                                                                                                                                                           
+Data work.ph_rename;                                                                                                                                                                                                                                            
+Set work.ph_d2(keep=sex rename=(sex=sex2));                                                                                                                                                                                                                     
+Run;                                                                                                                                                                                                                                                            
+/*查看改后的表结构，显示的不是数据集变量名（字段名），是label后的别名*/                                                                                                                                                                                                                                                                
+proc sql;                                                                                                                                                                                                                                                       
+describe table work.ph_rename;                                                                                                                                                                                                                                  
+quit;   
+                                                                                                                                                                                                                                                                
+查看表结构显示如下：
+create table WORK.PH_RENAME( bufsize=4096 )
+  (
+   sex2 char(4) label='性别'
+  );                                                                                                                                                                                                                                                                
+        
+
+11、output 当前观测值输出到【正在】被创建的数据集中，每一步时时输出
+
+建表一
+data work.ph_a;                                                                                                                         
+input id x1-x3;                                                                                                                         
+cards;                                                                                                                                  
+101 10 20 30                                                                                                                            
+102 40 50 60                                                                                                                            
+; 
+打印表查看：
+proc print data=work.Ph_a;                                                                                                              
+run;
+                                          Obs     id    x1    x2    x3
+
+                                           1     101    10    20    30
+                                           2     102    40    50    60
+
+使用output做一个双重循环，输出新表ph_b
+data work.ph_b;                                                                                                                         
+set work.ph_a; /*遍历逐条复制a表的行*/                                                                                                                         
+x=x1;output;/*遍历第i行x=x1列*/                                                                                                                            
+x=x2;output; /*遍历第i行x=x2列*/                                                                                                                            
+x=x3;output; /*遍历第i行x=x3列*/                                                                                                                          
+output; /*输出第i*/                                                                                                                                
+run;
+
+打印表二：
+proc print data=work.Ph_b;                                                                                                              
+run;
+
+结果如下：
+
+                                       Obs     id    x1    x2    x3     x
+
+                                        1     101    10    20    30    10
+                                        2     101    10    20    30    20
+                                        3     101    10    20    30    30
+                                        4     101    10    20    30    30
+                                        5     102    40    50    60    40
+                                        6     102    40    50    60    50
+                                        7     102    40    50    60    60
+                                        8     102    40    50    60    60
+
+
+上面处理不加output时
+data work.ph_b;                                                                                                                         
+set work.ph_a;                                                                                                                          
+x=x1;                                                                                                                                   
+x=x2;                                                                                                                                   
+x=x3;                                                                                                                                   
+run; 
+
+则结果如下，只存了最后一个步循环，x=x3：
+                                       Obs     id    x1    x2    x3     x
+
+                                        1     101    10    20    30    30
+                                        2     102    40    50    60    60
+
+
+
+[再看一例：根据条件输出，比如按条件遍历将每一步输出]
+
+data work.ph_out1 work.ph_out2;                                                                                                         
+set sashelp.class;                                                                                                                      
+if _n_ le 7 then output ph_out1; /*索引小于7的逐条遍历输出到表一*/                                                                                                       
+else output ph_out2;/*其它逐条遍历输出到表二*/                                                                                                                    
+run;                                                                                                                                    
+      
+12、Retain last first output
+
+例，输入by变量的last观测，并保留last最近前一条观测变量值
+
+创建一个数据集：
+
+data work.ph_a;                                                                                                                         
+input x y@@;/*@@作用是两个一行*/                                                                                                        
+cards;                                                                                                                                  
+1 10 1 20 1 200 2 30 3 20                                                                                                               
+3 20 3 40 5 40 3 80 4 400                                                                                                               
+;                                                                                                                                       
+       
+proc sort data=work.ph_a;by x;run; /*按x排序*/
+
+打印查看表一：
+                                                 Obs    x     y
+
+                                                   1    1     10
+                                                   2    1     20
+                                                   3    1    200
+                                                   4    2     30
+                                                   5    3     20
+                                                   6    3     20
+                                                   7    3     40
+                                                   8    3     80
+                                                   9    4    400
+                                                  10    5     40
+
+
+data work.ph_b;                                                                                                                         
+set work.ph_a;/*逐条复制a到b*/                                                                                                          
+by x;                                                                                                                                   
+retain rt;/*定义一个可迭代的变量rt*/                                                                                                    
+if first.x then rt=0;/*first是第一条观测值*/                                                                                            
+if last.x then output;/*last最后一条观测值，output输出到新表*/                                                                          
+run; 
+
+打印表二结果如下：
+proc print data=work.ph_b;                                                                                                              
+run;  
+
+                                              Obs    x     y     rt
+
+                                               1     1    200     0
+                                               2     2     30     0
+                                               3     3     80     0
+                                               4     4    400     0
+                                               5     5     40     0
+
+
+13、复制数据集表 set | keep | drop | if  | if then 
+
+data work.ph_a;                                                                                                                         
+input x y@@;/*@@作用是两个一行*/                                                                                                        
+cards;                                                                                                                                  
+1 10 1 20 1 200 2 30 3 20                                                                                                               
+3 20 3 40 5 40 3 80 4 400                                                                                                               
+;                                                                                                                                       
+                                                                                                                                        
+proc sort data=work.ph_a;by x;run;                                                                                                      
+                                                                                                                                        
+/*复制表*/                                                                                                                              
+data work.ph_students;                                                                                                                  
+set sashelp.class;                                                                                                                      
+run;                                                                                                                                    
+                                                                                                                                        
+/*打印表*/                                                                                                                              
+proc print data=ph_students;                                                                                                            
+run;                                                                                                                                    
+                                                                                                                                        
+/*复制某表保留指定列*/                                                                                                                  
+data work.ph_students2;                                                                                                                 
+set sashelp.class;                                                                                                                      
+keep Name Sex Age;                                                                                                                      
+run;                                                                                                                                    
+                                                                                                                                        
+proc print data=ph_students2;                                                                                                           
+run;                                                                                                                                    
+                                                                                                                                        
+/*排除掉某变量复制表*/                                                                                                                  
+data work.ph_students3;                                                                                                                 
+set sashelp.class;                                                                                                                      
+drop Sex;                                                                                                                               
+run;                                                                                                                                    
+                                                                                                                                        
+proc print data=ph_students3;                                                                                                           
+run;                                                                                                                                    
+                                                                                                                                                                                                                                                                           
+/*按条件复制set... if...*/                                                                                                              
+data work.ph_students4;                                                                                                                 
+set sashelp.class;                                                                                                                      
+if height>60;/*要数据集中>60的*/                                                                                                        
+run;                                                                                                                                    
+goptions reset=all;/*输出窗口重置*/                                                                                                     
+                                                                                                                                        
+proc print data=work.ph_students4;                                                                                                      
+run;                                                                                                                                    
+                                                                                                                                        
+/*按条件处理后复制set ...if ...then...*/                                                                                                
+                                                                                                                                        
+data work.ph_std5;                                                                                                                      
+set sashelp.class;                                                                                                                      
+if height>60 then weight = weight+100;                                                                                                  
+run;                                                                                                                                    
+                                                                                                                                        
+proc print data=work.ph_std5;                                                                                                           
+run;
+
+
+
+14、子集If
+If放在其它处理语句前边，提高效率
+
+data work.ph_aIf;                                                                                                                       
+set sashelp.class;                                                                                                                      
+if _n_ le 10;/*if子集过率，放在其它处理语句前，提高效率。_n_数据序号 le小于 gt大于，eq等于,ne不等于，ge大于等于，或用> < =  !=也可*/                                                                               
+y=10;                                                                                                                                   
+run;                                                                                                                                    
+
+15、where
+/*where ...between*/
+Where x between 10 and 20
+Where x not between 10 and 20
+Where x between y*2 and y*5
+Where x bewteen ‘a’ and ‘c’
+/*缺失值应用*/
+Where x is missing 或 where x is null
+/*where in*/
+Where x in (1,2) 等价于where x=1 or x=2
+
+/*where ...contains...*/  
+data work.ph_aa;                                                                                                                        
+input x $ @@;                                                                                                                           
+cards;                                                                                                                                  
+ab acd aed abdg abcde                                                                                                                   
+;                                                                                                                                       
+run;                                                                                                                                    
+                                                                                                                                        
+data work.ph_bb;                                                                                                                        
+set work.ph_aa;                                                                                                                         
+where x contains "ab"; /*也可用where x like "ab"*/                                                                                                                
+run;                                                                                                                                    
+proc print data=work.ph_bb;                                                                                                             
+run; 
+
+等价Where substr(x,1,3)=’abc’/*截取变量x前三位，substr(x,1,3)*/
+
+16、Remove移除 point指针 
+
+data a;                                                                                                                                 
+input x@@;                                                                                                                              
+cards;                                                                                                                                  
+2 3                                                                                                                                     
+;                                                                                                                                       
+run; 
+                                                                                                                                        
+data b;                                                                                                                                 
+input var$@@;                                                                                                                           
+cards;                                                                                                                                  
+a b c d e f                                                                                                                             
+;                                                                                                                                       
+run;                                                                                                                                    
+/*与modify连用，修改b表，做移除*/                                                                                                                                        
+data b;                                                                                                                                 
+set a;                                                                                                                                  
+modify b point=x;/*以a表的x列做指针删除b中指定列*/                                                                                                                       
+remove;                                                                                                                                 
+run;                                                                                                                                    
+
+B表删掉了第2,3条,变为以下
+x
+------------
+a
+d
+e
+f
+
+17、Delete 停止处理观测值，不会输出到正在创建的数据集中
+
+Data a;
+Set sashelp.class;
+If sex eq "女" then delete;/*等价于if sex ne "女"*/
+Run;
+结果集中是删除了女性的全部男性的
+
+18、Stop停止正在处理的data，不输出到正在创建的数据集中
+Data a;
+Set sashelp.class;
+If sex eq "女" then stop;/*遇到等于女的则停止处理data*/
+Run;
+结果集中是遇到女则停止处理data，只有直到第一个“女”之前的数据
+
+19、数据集管理append 将一个SAS数据集的观测值添加到另一个数据集，
+set是处理两表（数据集），也生成了一个新表，
+append是把数据直接加到一个表中。
+
+做两个表：
+
+data tbl1;                                                                                                                              
+do i=1 to 5;                                                                                                                            
+j=10;                                                                                                                                   
+output;                                                                                                                                 
+end;                                                                                                                                    
+                                                                                                                                        
+proc print data=tbl1;                                                                                                                   
+run;                                                                                                                                    
+       
+                                                 Obs    i     j
+
+                                                  1     1    10
+                                                  2     2    10
+                                                  3     3    10
+                                                  4     4    10
+                                                  5     5    10
+
+data tbl2;                                                                                                                              
+do i=15 to 20;                                                                                                                          
+j=100;                                                                                                                                  
+output;                                                                                                                                 
+end;                                                                                                                                    
+                                                                                                                                        
+proc print data=tbl2;                                                                                                                   
+run;
+                                                Obs     i     j
+
+                                                 1     15    100
+                                                 2     16    100
+                                                 3     17    100
+                                                 4     18    100
+                                                 5     19    100
+                                                 6     20    100
+
+
+把tbl2加到tbl1里 proc append base=原表 data=要加的表 force强行连接两个数据集，变量不匹配的时候要使用：
+proc append base=tbl1 data=tbl2;                                                                                                        
+run;                                                                                                                                                                                                                                                                           
+proc print data=tbl1;                                                                                                                   
+run; 
+                                                Obs     i     j
+
+                                                  1     1     10
+                                                  2     2     10
+                                                  3     3     10
+                                                  4     4     10
+                                                  5     5     10
+                                                  6    15    100
+                                                  7    16    100
+                                                  8    17    100
+                                                  9    18    100
+                                                 10    19    100
+                                                 11    20    100
+
+
+append先清除base的表，防止重复apped,同js中的html(“”)先清空再append 
+
+20、Infile dsd 模拟外文件输入
+
+20.1 Infile 读取外部文件 dsd 默认以逗号分隔，逗号前后无值的默认用空格填充
+用Infile datalines 可以用datalines 加数据模拟外部文件
+Data tbl3;                                                                                                                              
+Infile datalines dsd;                                                                                                                   
+Input x y z;                                                                                                                            
+Datalines;                                                                                                                              
+,2,3                                                                                                                                    
+4,5,6                                                                                                                                   
+7,,9                                                                                                                                    
+;                                                                                                                                       
+Run;                                                                                                                                    
+                                                                                                                                        
+proc print data=tbl3;                                                                                                                   
+run;  
+
+                                               Obs    x    y    z
+
+                                                1     .    2    3
+                                                2     4    5    6
+                                                3     7    .    9
+
+
+20.2 其它分隔符用dsd dlm=符号
+
+以下代码处理结果同上
+Data tbl4;                                                                                                                              
+Infile datalines dsd dlm='#';                                                                                                           
+Input x y z;                                                                                                                            
+Datalines;                                                                                                                              
+#2#3                                                                                                                                    
+4#5#6                                                                                                                                   
+7##9                                                                                                                                   
+;                                                                                                                                       
+Run;                                                                                                                                    
+goptions reset=all;                                                                                                                     
+                                                                                                                                        
+proc print data=tbl4;                                                                                                                   
+run;  
+
+20.3 dsd另一作用：识别引号中的逗号不分隔，
+
+Data tbl5;                                                                                                                              
+Infile datalines dsd;                                                                                                                   
+Input x$ y z:$30.; /*变量后面的:作用去掉字符串外的引号。30.长度30*/                                                                                                                     
+Datalines;                                                                                                                              
+john,76,"he is a boy,not a girl."                                                                                                       
+Alex,23,"she is a girl, or a boy."                                                                                                      
+;                                                                                                                                       
+Run;                                                                                                                                    
+goptions reset=all;                                                                                                                     
+                                                                                                                                        
+proc print data=tbl5;                                                                                                                   
+run; 
+                                  Obs     x       y               z
+
+                                   1     john    76    he is a boy,not a girl.
+                                   2     Alex    23    she is a girl, or a boy.
+
+
+20.4 infile missover 缺失值补空，强制读完每行
+
+data a;                                                                                                                                 
+infile datalines missover;/*missover强指针，强制读完每行，没值时补空，或用dsd dlm=” ”*/                                                                                                              
+input x1-x5;                                                                                                                            
+datalines;                                                                                                                              
+1 2 3                                                                                                                                   
+6 7 8 9 10                                                                                                                              
+11 12 13 14 15                                                                                                                          
+;                                                                                                                                       
+run;                                                                                                                                    
+                                                                                                                                        
+proc print data=a;                                                                                                                      
+run;    
+
+                                        Obs    x1    x2    x3    x4    x5
+
+                                         1      1     2     3     .     .
+                                         2      6     7     8     9    10
+                                         3     11    12    13    14    15
+
+
+20.5 指定外部文件 infile应用
+
+filename f1Path "D:\SASFile\file2.txt";/*指定路径没有等号*/                                                                             
+data tbl1_test;                                                                                                                         
+infile f1Path length=len lrecl=32767;/*读取外部文件*/                                                                                   
+input record $ varying1000. len;/*$ varying1000. 设置变长变量，len实际长度*/                                                            
+run;                                                                                                                                    
+goptions reset=all;                                                                                                                     
+                                                                                                                                        
+proc print data=tbl1_test;                                                                                                              
+run;                                                                                                                                    
+                                                                                                                                        
+                                                       Obs    record
+
+                                                1     abcdefg
+                                                2     12345678952
+
+                                                                                                                                
+21、by语句，规定分组变量，用于控制set、merge、sort等语句
+
+21.1组内排序
+Proc sort data=tbl;
+By x y z;/*组内排序*/
+Run;
+
+21.2分组排序存到其它表
+proc sort data=sashelp.class out=test_ph;/*排序后指定表名*/                                                                                               
+by sex;                                                                                                                                 
+run;                                                                                                                                    
+/*用by分组打印*/                                                                                                                                        
+proc print data=test_ph;                                                                                                                
+by sex;                                                                                                                                 
+run;     
+
+22.1、 merge语句 merge 表1 表2 列的合并
+
+/*创建逻辑库*/                                                                                                                          
+libname phlib 'D:\SASFile\db';                                                                                                          
+data phlib.ph_class;                                                                                                                    
+set sashelp.class;                                                                                                                      
+run;                                                                                                                                    
+data phlib.ph_class2(rename=(name=name2)); /*修改列名name为name2*/                                                                      
+set sashelp.class;                                                                                                                      
+name = "1"||name;/*复制表2给名字前拼接1*/                                                                                               
+run;                                                                                                                                    
+/*merge两表,merge是列的合并，改后的name1新列和原来的name列都出现在了merge后的表里*/                                                     
+data phlib.ph_class_merge;                                                                                                              
+merge phlib.ph_class phlib.ph_class2;                                                                                                   
+run;                                                                                                                                    
+                                                                                                                                        
+proc print data=phlib.ph_class_merge;                                                                                                   
+run;
+
+
+                      Obs    Name          Sex    Age    Height    Weight    name2
+
+                         1    阿尔弗雷德    男      14     69.0      112.5    1阿尔弗雷德
+                         2    爱丽丝        女      13     56.5       84.0    1爱丽丝
+                         3    芭芭拉        女      13     65.3       98.0    1芭芭拉                                                                                                                                        
+             ……
+
+
+22.2 merge In连用
+data phlib.ph_class_merge2;                                                                                                             
+merge phlib.ph_class(in=a) phlib.ph_class2(in=b); /*in=a表示a为是否在ph_class有观测值，存在则为1，不存在为0*/                                                                                      
+by Sex;                                                                                                                                 
+if(a=1 & b=1);                                                                                                                          
+run;    
+ 
+22.3 定义两表data 表1 表2
+
+Data 表1 表2；
+Set sashelp.class;
+If sex = “男” then output 表1;
+If sex=”女” then output 表2;
+
+23、update  udpate 表1 表2; by 字段名;
+
+Data work.tbl1;                                                                                                                                     
+Input id$1-4 name$6-19 address$21-37 city$39-51;/*定义变量长度，前边数字是输入数据的第几列位置，各字与前一变量相关2个空格。或直接用长度后面加点10.*/
+Datalines;                                                                                                                                          
+C001 jacob Adams   111 clancey court chapel hill Nc                                                                                                 
+C002 jacob1 Adams1 121 clancey1 court1 chapel hill Nc                                                                                               
+C003 jacob2 Adams2 3311 clancey2 court2 chapel hill Nc                                                                                              
+;                                                                                                                                                   
+run;                                                                                                                                                
+goptions reset=all;                                                                                                                                 
+Data work.tbl2;                                                                                                                                     
+Input id$1-4 name$6-19 address$21-37 city$39-51;/*定义变量长度，前边数字是输入数据的第几列位置，各字与前一变量相关2个空格。或直接用长度后面加点10.*/
+Datalines;                                                                                                                                          
+C001      111 clancey court chapel hill Nc                                                                                                          
+C002 11111 Adams1 121 clancey1 court1 chapel hill Nc                                                                                                
+C005 jacob2 Adams2 3311 clancey2 court2 chapel hill Nc                                                                                              
+;                                                                                                                                                   
+Run;     
+                                                                                                                                               
+/*把tbl2中的数据更新到tbl1中*/                                                                                                                      
+data work.tblUp;                                                                                                                                    
+update work.tbl1 work.tbl2; /*把tbl2中内容按id更新到tbl1中，没有的补记录，已有的更新最新改动*/                                                                                                                      
+by id;                                                                                                                                              
+run;
+
+Proc print data=表名 noobs;/*打印不要自带的索引*/
+Run;
+
+24、Modify
+删除 修改 填加
+
+/*modify表名; 字段=字段修改*/
+Data ph_studentsNew;
+Modify ph_students;
+Height = height*0.5;
+Run;
+
+/*通过一个数据集修改另一个数据集*/
+
+Data classNew;
+Modify tbl1 tbl2;
+By id;
+name = ”@”||name;/*一个表的列=另一表列计算处理，名字拼接符号，或做其它计算，某字段+某字段*2*/
+Run;
+
+25、End、迭代计算总销售额，first、last
+
+Data tbl_total_sales;
+Set work.sales end=last;/*end做标记，读到迭代的最后一步结束，标记为1否则为0*/
+Retain total_sales 0;/*定义可迭代的变量*/
+total_sales=total_sales+sales;/*set遍历行，逐条累加销售额*/
+/*上面两行等价于 total_sales+sales*/
+If last then output;/*输出最后结果保留最后一条*/
+Keep total_sales;/*只要这一列，复制到结果集表*/
+Run;
+
+迭代的First 第一步 last最后一步
+
+用first last实现分组累加：
+
+Data tbl;
+Set work.sales;
+By dept gender;/*按这两变量逐行扫描处理复制*/
+Retain sAll;/*可迭代变量*/
+If first.gender then sAll=0;/*gender组中内sales累加，第一步变量赋值为0*/
+sAll = sAll+sales;/*累加*/
+If last.gender then output;/*gender组中内sales累加，最后一步输出*/
+Keep dept gender sAll;
+Run;
+
+26、多个set，双重遍历计算做报表
+
+Set两个表，合并数据集:
+
+Data tbl;
+Set work.data1;
+Set work.data2;
+Run;
+
+还可以多步读取表做各种灵活计算操作。
+例：class表中找出每个小朋友的比大的小朋友，并拼接制作报表展示出来
+
+data work.ph_tbl_set;
+set sashelp.class(keep=name age);/*外循环*/
+Do i=1 to nobs;/*从第1条到最后一条，逐条处理*/
+/*内循环，针对每一条小朋友，查找比他大人的名字和年龄*/
+Set sashelp.class(keep=name age rename=(name=rsName age=rsAge)) nobs=nobs point=i;/*观测序号，遍历个数nobs数据集数据条目数*/
+If age lt rsAge then output;/*如果比他大则输出*/
+End;
+Run;
+/*排序、打印*/
+Proc sort data=work.ph_tbl_set;
+By name age rsAge rsName;
+Run;
+
+Proc print data=work.ph_tbl_set;
+Title “双重遍历计算做报表”
+By name age;/*按name和age分组打印，每个报表都打出来*/
+Id name age;
+Run;
+
+
+
+26.2 Set point nobs
+
+Data tbl1;
+Do i=1 to total by 3;
+Set work.sample point=i nobs=total;
+Output;
+Stop;
+Run;
+
+以上功能也可以用hash对象处理，通过对象名和方法对变量处理
