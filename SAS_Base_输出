@@ -1,0 +1,746 @@
+                                         SAS 输出控制
+                                         
+                                         
+1、输出控制语句proc printto 
+
+
+log(日志窗口)：日志，程序运行过程中产生的日志
+Output(输出窗口结果)：SAS过程步运行产生图表结果
+Graph(图形窗口)：SAS过程步运行产生的图形结果
+Ods(输出文件系统)：输出txt html excel sas数据集表等
+
+
+可以输出到终端、外部文件、打印机
+
+1)LOG窗口
+eg:将日志输出到外部文件
+Proc printto log=’d:\newlog.txt’;new;
+Proc print data=sashelp.class;
+Proc printto;
+Run;
+
+2）output窗口
+eg:将SAS数据集输出到外部文件
+Filename rt “D:\sasdata.txt”;
+Proc printto print=rt new;
+Run;
+Proc printto;
+Run;
+
+Eg:将output运行结果输出到外部文件
+
+Filename out1 “D:\outputt.txt”;
+Proc printto print=out1 new;
+Run;
+Proc freq data=sas.class;
+Tables sex;
+Run;
+Proc printto;/*回到默认*/
+Run;
+
+
+2、常用ods输出控制
+
+
+最主要功能控制SAS输出结果
+操控output窗口
+操控result窗口
+操控graphi窗口
+记录每一个输出对象的名称
+选择output窗口结果输出
+将output窗口结果转成SAS数据集或其他格式文件
+查询、组织和管理输出对象
+
+输出目标、对象：
+Listing
+Html
+Results
+……
+
+
+
+
+2.1  Ods html 输出网页格式：
+
+例：把数据集class在过程步univariate产生的所有结果输出到文件test.html中
+
+Ods listing close; /*关闭默认的输出管道listing*/                                                                                        
+Ods html file="D:\SASFile\test.html";/*定义html输出*/                                                                                   
+Proc univariate data=sashelp.class; /*weight变量的统计量输出为html页面*/                                                                                                    
+Var weight;                                                                                                                             
+Run;                                                                                                                                    
+Ods html close;/*关闭html输出*/                                                                                                         
+Ods listing;/*打开默认*/
+
+
+
+
+
+
+
+
+2.2 ods listing 系统默认的过程步（proc步）的输出管道，输出文本文件
+
+字符文本在output窗口显示
+图形在grapgi窗口显示
+
+
+
+例：输出过程步的结果到指定外部文件
+filename out1 "D:\SASFile\listing1.txt";                                                                                                
+ods listing file=out1;                                                                                                                  
+Proc univariate data=sashelp.class;/*统计量输出到文件*/                                                                                                     
+var age;                                                                                                                                
+Run;                                                                                                                                    
+ods listing;
+
+
+例：仅输出上例中指定的统计量到外部文件，使用select
+ods listing select basicmeasures; /*与上面区别，加一行这个*/                                                                                                                          
+filename out1 "D:\SASFile\listing2.txt";                                                                                                                    
+ods listing file=out1;                                                                                                                                      
+Proc univariate data=sashelp.class;/*统计量输出到文件*/                                                                                                     
+var age;                                                                                                                                                    
+Run;                                                                                                                                                        
+ods listing;                                                                                                                                                
+                
+
+
+例：输出一个过程的多个结果到外部文件
+Ods listing select basicmeasures quantiles;/*加一个quantiles*/
+filename out1 "D:\SASFile\listing3.txt"; 
+Ods listing file = out1;
+Proc univariate data=sashelp.class;
+Var age;
+Run;
+Ods listing;
+
+
+
+例：输出多个过程的结果
+Ods listing close;
+filename out1 "D:\SASFile\listing4.txt"; 
+Ods listing file =out1;
+Proc univariate data=sashelp.class;
+Var age;
+Run;
+Proc freq data=sashelp.class;
+Table sex;
+Run;
+Ods listing;
+
+
+
+
+
+2.3 ods results 
+
+
+Ods results on|off;
+On:打开results管道，默认状态
+Off:关闭results管道
+开发占资源，一般要关闭，通过select exclude等对输出对象进行输出
+
+例：关闭results管道，并同时开放listing管道
+Ods results off;
+Ods listing;
+Proc print data=sashelp.class;
+……
+Run;
+/*处理完程序块后，再恢复默认，打开*/
+Ods results;
+
+例：同时关results listing，输出部分结果到外部文件
+Ods listing select basicmeasures quantiles;                                                                                                                 
+Ods results off;                                                                                                                                            
+Filename out "D:\SASFile\listing5.txt";                                                                                                                     
+Ods listing file=out;                                                                                                                                       
+Proc univariate data = sashelp.class;                                                                                                                       
+Var age;                                                                                                                                                    
+Run;                                                                                                                                                        
+Ods results on;                                                                                                                                             
+Ods listing;
+
+
+2.4  ods trace 查询输出管道的对象，在日志查看，如basicMeasures Quantiles等解释
+
+
+Ods trace on | off
+
+选项：
+Label
+listing
+
+/*查看univariate 的输出对象*/
+Ods trace on;
+Proc univariate data=sashelp.class;
+/*Class Sex;*//*查看多项*/
+Var age;
+Run;
+Ods trace off;
+
+
+
+
+
+2.5 ods output 把输出对象转换成SAS数据集
+
+Ods output 
+输出对象1=SAS数据集1
+输出对象2 = SAS数据集2
+……
+
+输出对象可以是名称、标签、模板或路径的任何一种，通过trace查询对象语句获得
+
+例：输出基础测试对象和分位数据对象为SAS数据集
+Ods listing close;                                                                                                                                          
+Ods results off;                                                                                                                                            
+Ods output;                                                                                                                                                 
+Basicmeasures=bm quantiles=quanti;/*基础测试对象 对象 = 数据集名表名*//*分位数据对象 对象=数据集名表名*/                                                    
+Proc univariate data=sashelp.class;                                                                                                                         
+Class sex;                                                                                                                                                  
+Var weight height;                                                                                                                                          
+Run;                                                                                                                                                        
+Ods results on;                                                                                                                                             
+Ods listing;
+
+例：输出基本测试对象和sex=’F’分位数对象为SAS数据集；
+Ods listing close;                                                                                                                                          
+Ods results off;                                                                                                                                            
+Ods output;                                                                                                                                                 
+basicmeasures=bm;                                                                                                                                           
+univariate.age.女.quantiles =age_quanti;                                                                                                                     
+univariate.weight.女.quantiles =weight_quanti;                                                                                                               
+Proc univariate data=sashelp.class;                                                                                                                         
+Class sex;/*以sex分组*/                                                                                                                                     
+Var age weight;                                                                                                                                             
+Run;                                                                                                                                                        
+Ods results on;                                                                                                                                             
+Ods listing;
+
+例：拆开所有输出基础测度对象为不同的SAS数据集
+Ods output basicmeasures(matche_all=measure_dsn)=measure;
+Proc univariate data=sashelp.class;
+Class sex;
+Var weight height;
+Run;
+Ods output close;'
+%put&measure_dsn;
+
+例：使用match_all选项产生的结果
+
+Data all_unix;
+Set&measure_dsn;
+Run;
+
+3、ods html 把输出窗口Output的输出对象转成html文件
+
+适合汇总数据集，不是很大的
+
+例：输出绝对物理路径的一个HTML文件
+Ods listing close;                                                                                                                                          
+Ods results off;                                                                                                                                            
+Ods html body="D:\SASFile\html1.html";                                                                                                                      
+Proc univariate data=sashelp.class;                                                                                                                         
+Class sex;                                                                                                                                                  
+Var weight;                                                                                                                                                 
+Run;                                                                                                                                                        
+Ods html close;                                                                                                                                             
+Ods results on;                                                                                                                                             
+Ods listing;
+
+例：输出相对物理路径的导航式HTML文件（如：左侧菜单frame格式）
+ods listing close;                                                                                                                                          
+ods results off;                                                                                                                                            
+ods html path='D:\SASFile\'(url=none)                                                                                                                       
+         body='ods_lco.html'(title='ods browser title')                                                                                                     
+         contents='ods_toc.html'(title='ods contents')                                                                                                      
+         frame='ods_frm.html'(title='ods frame')                                                                                                            
+         newfile = proc;/*按什么来输出多少个html文件 none默认 proc根据过程步个数 output 根据输出对象个数*/                                                                                                                                   
+proc univariate data=sashelp.class;                                                                                                                         
+class=sex;                                                                                                                                                  
+var weight;                                                                                                                                                 
+histogram;                                                                                                                                                  
+run;                                                                                                                                                        
+proc means data=sashelp.class n min mean max;                                                                                                               
+class sex;                                                                                                                                                  
+var weight height;                                                                                                                                          
+run;                                                                                                                                                        
+ods html close;                                                                                                                                             
+ods results off;                                                                                                                                            
+ods listing;
+
+
+
+
+
+
+例：输出图形的HTML文件
+
+ods listing close;                                                                                                                                          
+ods results off;                                                                                                                                            
+ods html                                                                                                                                                    
+path='D:\SASFile'(url=none)                                                                                                                                 
+body='graph_body.html'                                                                                                                                      
+;                                                                                                                                                           
+proc gchart data=sashelp.class;                                                                                                                             
+vbar sex/sumvar=weight type=mean                                                                                                                            
+subgroup=sex;                                                                                                                                               
+run;                                                                                                                                                        
+quit;                                                                                                                                                       
+ods html                                                                                                                                                    
+path='D:\SASFile'(url=none)                                                                                                                                 
+body='active.html';                                                                                                                                         
+proc print data=sashelp.class;                                                                                                                              
+var weight;                                                                                                                                                 
+footnote'<a href="graph_body.html">';                                                                                                                       
+run;                                                                                                                                                        
+footnote;                                                                                                                                                   
+ods html close;                                                                                                                                             
+ods results on;                                                                                                                                             
+ods listing;
+
+
+例：输出Excel格式的HTML文件
+
+ods listing close;                                                                                                                                          
+ods results off;                                                                                                                                            
+ods html                                                                                                                                                    
+    path='D:\SASFile'                                                                                                                                       
+    body='tabexcel.xls';                                                                                                                                    
+proc tabulate data=sashelp.class;                                                                                                                           
+class sex;                                                                                                                                                  
+var weight height;                                                                                                                                          
+run;                                                                                                                                                        
+ods html close;                                                                                                                                             
+ods results on;                                                                                                                                             
+ods listing; 
+
+4、ods csvall 把输出窗口的Output输出对象转成csv文件
+
+例：把class表输出到CSV文件
+
+ods listing close;                                                                                                                                          
+ods results off;                                                                                                                                            
+ods csvall                                                                                                                                                  
+path='D:\SASFile'                                                                                                                                           
+body='csv1.csv'                                                                                                                                             
+;                                                                                                                                                           
+proc print data=sashelp.class;                                                                                                                              
+run;                                                                                                                                                        
+ods csvall close;                                                                                                                                           
+ods results on;                                                                                                                                             
+ods listing;
+
+5、ods select 将过程步的输出有选择的输出到目标中
+
+语法
+Ods select
+选项
+all
+none
+
+例：选择一个过程步的输出对象输出到HTML文件
+
+
+ods listing close;                                                                                                                                          
+ods results off;                                                                                                                                            
+ods html                                                                                                                                                    
+path='D:\SASFile'                                                                                                                                           
+body='selection.html'(title='html select')                                                                                                                  
+contents='selection_toc.html'(title='content')                                                                                                              
+frame='selection_frm.html'(title='frm')                                                                                                                     
+newfile=none                                                                                                                                                
+;                                                                                                                                                           
+ods select                                                                                                                                                  
+univariate.age.女.quantiles                                                                                                                                 
+univariate.weight.女.quantiles                                                                                                                              
+;                                                                                                                                                           
+ods show;/*选择的显示出来*/                                                                                                                                 
+proc univariate data=sashelp.class;                                                                                                                         
+class sex;                                                                                                                                                  
+var age weight;                                                                                                                                             
+run;                                                                                                                                                        
+/*以下语句行用于恢复默认*/                                                                                                                                  
+ods select all;                                                                                                                                             
+ods html close;                                                                                                                                             
+ods results on;                                                                                                                                             
+ods listing;                                                                                                                                                
+                                                                                                                                                            
+                                                                                                                                                            
+/*查看下select需要的路径 univariate.age.f.quantiles报错，查看可知f需改为女*/                                                                                
+ods trace on;                                                                                                                                               
+proc univariate data=sashelp.class;                                                                                                                         
+class sex;                                                                                                                                                  
+var age weight;                                                                                                                                             
+run;                                                                                                                                                        
+ods trace off;
+
+
+例：选择多个过程步输出对象到Html
+
+ods listing close;                                                                                                                                          
+ods results off;                                                                                                                                            
+ods html                                                                                                                                                    
+path='D:\SASFile'                                                                                                                                           
+body='selection2.html'(title='html select')                                                                                                                 
+contents='selection2_toc.html'(title='content')                                                                                                             
+frame='selection2_frm.html'(title='frm')                                                                                                                    
+newfile=none                                                                                                                                                
+;                                                                                                                                                           
+ods select                                                                                                                                                  
+univariate.age.女.quantiles                                                                                                                                 
+univariate.weight.女.quantiles                                                                                                                              
+;                                                                                                                                                           
+ods show;/*选择的显示出来*/                                                                                                                                 
+proc univariate data=sashelp.class;                                                                                                                         
+class sex;                                                                                                                                                  
+var age weight;                                                                                                                                             
+run;                                                                                                                                                        
+ods select                                                                                                                                                  
+univariate.age.女.quantiles                                                                                                                                 
+univariate.actual.美国.Moments                                                                                                                              
+;                                                                                                                                                           
+proc univariate data=sashelp.prdsale;                                                                                                                       
+class country;                                                                                                                                              
+var actual;                                                                                                                                                 
+run;                                                                                                                                                        
+/*以下语句行用于恢复默认*/                                                                                                                                  
+ods select all;                                                                                                                                             
+ods html close;                                                                                                                                             
+ods results on;                                                                                                                                             
+ods listing; 
+
+
+例：选择一个过程步同步输出到不同的输出目标（两种格式）,，一份html，一份txt
+
+ods listing close;                                                                                                                                          
+ods results off;   
+/*结果输出到html*/                                                                                                                                         
+ods html                                                                                                                                                    
+path='D:\SASFile'                                                                                                                                           
+body='two_selection.html'(title='html select')                                                                                                              
+contents='two_selection_toc.html'(title='content')                                                                                                          
+frame='two_selection_frm.html'(title='frm')                                                                                                                 
+newfile=none                                                                                                                                                
+;                                                                                                                                                           
+ods select                                                                                                                                                  
+univariate.age.女.quantiles                                                                                                                                 
+univariate.weight.女.quantiles                                                                                                                              
+;                                                                                                                                                           
+ods show;/*选择的显示出来*/                                                                                                                                 
+proc univariate data=sashelp.class;                                                                                                                         
+class sex;                                                                                                                                                  
+var age weight;                                                                                                                                             
+run; 
+/*结果输出到txt文件*/                                                                                                                                                       
+filename outpath 'D:\SASFile\two_listing_select.txt';                                                                                                       
+ods listing file=outpath;                                                                                                                                   
+ods select                                                                                                                                                  
+basicmeasures;                                                                                                                                              
+proc univariate data=sashelp.class;                                                                                                                         
+class sex;                                                                                                                                                  
+var height;                                                                                                                                             
+run;                                                                                                                                                        
+/*以下语句行用于恢复默认*/                                                                                                                                  
+ods select all;                                                                                                                                             
+ods html close;                                                                                                                                             
+ods results on;                                                                                                                                             
+ods listing;
+
+注意：以上这种写法 身高同步统计到了html文件中，但txt文件中只有身高，没有年龄和体重。因为年龄和体重的过程步在select导出txt的前面。所以这里可以根据需求灵活选择在哪一步select 和执行Proc过程步。
+
+6、ods exclude 与select相关，逆向操作，在输出目标中排除要输出的对象
+语法 ods exclude
+
+例：排除一个过程步的输出对象至目标HTML文件
+ods listing close;                                                                                                                                          
+ods results off;                                                                                                                                            
+ods html                                                                                                                                                    
+path='D:\SASFile'                                                                                                                                           
+body='exclude.html'(title='html select')                                                                                                                    
+contents='exclude_toc.html'(title='content')                                                                                                                
+frame='exclude_frm.html'(title='frm')                                                                                                                       
+newfile=none                                                                                                                                                
+;                                                                                                                                                           
+ods exclude                                                                                                                                                 
+univariate.age.女.quantiles                                                                                                                                 
+univariate.weight.女.quantiles                                                                                                                              
+;/*排除女生年龄与体重分位数*/                                                                                                                               
+ods show;/*选择的显示出来*/                                                                                                                                 
+proc univariate data=sashelp.class;                                                                                                                         
+class sex;                                                                                                                                                  
+var age weight;                                                                                                                                             
+run;                                                                                                                                                        
+                                                                                                                                                            
+/*以下语句行用于恢复默认*/                                                                                                                                  
+ods select all;                                                                                                                                             
+ods html close;                                                                                                                                             
+ods results on;                                                                                                                                             
+ods listing;   
+
+
+
+7、tabulate 制作汇总报表
+
+用于编写程序生成报表
+
+7.1 做一个简单的报表
+
+语法：
+Proc tabulate data=数据集;
+Class 变量 用于分类分组
+Var 变量 分析变量 要分析哪些变量
+Table 表达式 用于定义汇总表格布局 列 行等 先列后行
+
+例：Table dept,emp_name,amount
+跟人能dept取值把汇总表分页，emp_name做列，amout做行，
+注意变量选取：不可以即是分类又是分析变量，分析变量都出现在一个维度中
+
+制作报表前，必须根据要显示的内容明确几个问题：
+1、什么变量作为分类变量
+2、什么变量作为分析变量
+3、需要计算什么统计量
+4、用什么样的表格展示结果
+
+如cars表，做一个表格显示每一个厂商的个数（类似例子如某个州的交易次数）
+
+分析：分类变量是make，厂商的个数，频数统计量，默认的就是频数统计量
+
+proc tabulate data=sashelp.cars;                                                                                                                            
+title '汔车厂商';                                                                                                                                           
+class make; 
+/*没定义var 分析变量，默认为频数*/                                                                                                                                                  
+table make;  /*make做为列，出现在表格的列中*/                                                                                                                                               
+run;
+
+
+例：制作报表各性别人数
+proc tabulate data=sashelp.class;                                                                                                                           
+title '各性别人数';                                                                                                                                         
+class sex;                                                                                                                                                  
+table sex;                                                                                                                                                  
+run;   
+
+
+
+7.2 missing分类变量中有缺失值的处理
+
+汇总时系统会自动删除
+Proc tabulate missing可将缺失值显示为特定类别
+语法：
+Proc tabulate data=数据集 mising
+会对所有class起作用，第一次就要使用比较好，全面了解下数据
+
+例：显示缺失分类变量的统计结果
+proc tabulate data=sashelp.cars;                                                                                                                            
+title '汔车厂商';                                                                                                                                           
+class make/missing;                                                                                                                                         
+table make;                                                                                                                                                 
+run; 
+
+7.3 做一个报表，计算统计量
+
+例：用tabulate过程制作一个表格，显示每个性别的身高均数
+分析：分类变量sex，分析变量height，使用均值统计量mean，sex设定为行，身高均值设定为列
+
+/*先看下身高和*/
+proc tabulate data=sashelp.class;                                                                                                                           
+title '性别均身高汇总表';                                                                                                                                   
+class sex;                                                                                                                                                  
+var height;                                                                                                                                                 
+table sex,height ;/*别忘了逗号*/                                                                                                                                           
+run; 
+/*没有计算统计量时默认统计和*/    
+ 
+
+计算统计量，并完成上例中的身高均值汇总报表展示：
+proc tabulate data=sashelp.class;                                                                                                                           
+title '性别均身高汇总表';                                                                                                                                   
+class sex;                                                                                                                                                  
+var height;                                                                                                                                                 
+table sex, (height)*(mean); /*统计变量与统计量用星号连接*/                                                                                                                               
+run;                                                                                                                                                        
+     
+
+例：报表统计不同性别的身高均，体重均
+proc tabulate data=sashelp.class;                                                                                                                           
+title '性别均身高汇总表';                                                                                                                                   
+class sex;                                                                                                                                                  
+var height weight;                                                                                                                                          
+table sex, (height weight)*(mean);/*多个变量间用空格间隔，多个统计量用空格间隔*/                                                                                                                          
+run;      
+
+ 
+7.4 作一个报表，分页
+
+例：用tabulate制作一个表，显示不同性别每个年龄组的身高均值，并将不同年龄分页展示
+分析：分类变量有两个 sex和age，分析变量有一个height，统计量是均值mean，需要用age来分页，sex设为行，height均值设为列
+
+proc tabulate data=sashelp.class;                                                                                                                           
+title '不同性别各年龄组均身高';                                                                                                                             
+class sex age;                                                                                                                                              
+var height;                                                                                                                                                 
+table age,sex,(height)*(mean); /*第一个是分页变量*/                                                                                                                             
+run;                                                                                                                                                        
+          
+7.5 多种格式的汇总报表
+
+7.5.1 使用空格操作符制作连排表格
+
+例：制作一个表，显示每个性别的身高均值和每个年龄组的身高均值，用连排表格制作
+分析：分类变量 sex和age，统计量mean均值
+
+本例与7.4相同，换一种展示方式，用连排表格制作
+制作方法，把逗号换成空格
+
+proc tabulate data=sashelp.class;                                                                                                                           
+title '不同性别各年龄组均身高';                                                                                                                             
+class sex age;                                                                                                                                              
+var height;                                                                                                                                                 
+table sex age,(height)*(mean);/*将这里的两个分组变量逗号换成空格，即将分页展示变成了连排表格*/                                                                                                                              
+run;  
+
+
+
+7.5.2 使用星号操作符制作交叉组合表
+使用*隔开两个元素，制作交叉组合表
+
+例：制作一个表，显示每个性别的身高均值和每个年龄组的身高均值，即，上例用交叉组合表展示
+
+proc tabulate data=sashelp.class;                                                                                                                           
+title '不同性别各年龄组均身高';                                                                                                                             
+class sex age;                                                                                                                                              
+var height;                                                                                                                                                 
+table sex*age,(height)*(mean);/*两个分类用星号隔开*/                                                                                                                              
+run;  
+
+上例显示的是男生平均身高，女生平均身高，及各年龄组均身高，本例显示的是男生里每个年龄组均身高，女生里每个年龄组均身高，两级分类下分类汇总形式展示
+
+
+
+7.5.3 使用关键字all
+页 行 列中使用，一个或多个分类变量上 all作用是所在维度的总的汇总
+proc tabulate data=sashelp.class;                                                                                                                           
+title '不同性别各年龄组均身高';                                                                                                                             
+class sex age;                                                                                                                                              
+var height;                                                                                                                                                 
+table sex*age all,(height)*(mean);/*加all，生成的表格中加了全部的均身高，即加了一项所有项合并后的均身高*/                                                                                                                          
+run; 
+
+
+
+proc tabulate data=sashelp.class;                                                                                                                           
+title '不同性别各年龄组均身高';                                                                                                                             
+class sex age;                                                                                                                                              
+var height;                                                                                                                                                 
+table sex*(age all),(height)*(mean); /*(age all)针地每个性别组中的年龄汇总补加一个全部年龄组的均值，即加了一项年龄合并，所有年龄组男生均身高，所有年龄组的女生均身高*/                                                                                                                       
+run;   
+
+
+
+proc tabulate data=sashelp.class;                                                                                                                           
+title '不同性别各年龄组均身高';                                                                                                                             
+class sex age;                                                                                                                                              
+var height;                                                                                                                                                 
+table (sex all)*age,(height)*(mean);/*(sex all)意思是加了一组性别合并后看每个年龄组的身高均值*/                                                                                                                     
+run;                                                                                                                                                        
+         
+
+
+table (sex all)*(age all) all,(height)*(mean);/*所有合并的可能都展示出来*/    
+
+
+
+
+7.6 tabulate统计量
+
+默认统计量，分类变量默认统计量是频数，分析变量默认统计量是求和统计量
+其它统计量
+
+例：用tabulate做一个报表，显示男女组中每个年龄组人数，身高均值、总合、体重均数
+分析：分类变量sex、age，分析变量是height、weight，统计量是对height统计频次N、求和sum，对体重统计求和均值mean
+注意：年龄在这里是分类变量，不可同时做分析变量，这里的人数用了身高统计，出现了几个身高就是几个人。此例换成交易次数和销售额场景统计更有意义
+proc tabulate data=sashelp.class;                                                                                                                           
+class sex age;                                                                                                                                              
+var height weight;                                                                                                                                          
+table sex*age, height*n height*sum weight*mean; /*分析变量与相应统计量用星号间隔，各统计项之间用空格间隔，同一个分析变量都应用的统计量可以统一写在括号里用空格间隔，见前面例子*/                                                                                                            
+run;                                                                                                                                                        
+                                                                                                                                                            
+                      
+7.7 改进报表显示
+
+7.7.1 变量或统计量标签设定
+
+将汇总表中的变量都使用中文标签显示
+语法
+更改变量标签名：
+在table拼接语句中将要直接做更改替换，变量名=标签名；
+或加语句label 变量名=标签名；
+更改统计量标签名：
+Keylabel 统计量关键字=统计量标签名;
+在table行直接替换 统计量关键字=统计量标签名;
+
+
+
+例，把上面一个例子变量加标签
+proc tabulate data=sashelp.class;                                                                                                                                                                                                                               
+class sex age;                                                                                                                                                                                                                                                  
+var height weight;                                                                                                                                                                                                                                              
+table sex*age, height="身高"*n="人次" height="身高"*sum="总和" weight*mean;   
+label weight="体重";    
+keylabel mean="均值";                                                                                                                                                                                         
+run;                                                                                                                                                                                                                                                            
+            
+
+
+
+7.7.2 使用format语句控制分类变量分组
+
+/*将年龄值划分定义一个分组*/
+proc format;                                                                                                                                                                                                                                                    
+        value agegroup                                                                                                                                                                                                                                          
+              11-12='低年组(11-12)'                                                                                                                                                                                                                             
+              13-14='中年组(13-14)'                                                                                                                                                                                                                             
+              15-16='高年组(15-16)'                                                                                                                                                                                                                             
+;                                                                                                                                                                                                                                                               
+run;                                                                                                                                                                                                                                                            
+proc tabulate data=sashelp.class;                                                                                                                                                                                                                               
+class sex age;                                                                                                                                                                                                                                                  
+var height weight;                                                                                                                                                                                                                                              
+table sex*age, height*n height *sum weight*mean;                                                                                                                                                                                                                
+format age agegroup.;/*注意后面有个点，agegroup是上面定义的年龄组名称*/                                                                                                                                                                                                                                           
+run;                                                                                                                                                                                                                                                            
+
+报表结果显示，年龄列替换为年龄组，做了组内合并统计
+  
+
+自定义格式：
+Proc format;
+Value 格式名称
+  范围1=标签名
+          范围2=标签名
+……  
+;    
+Run;
+
+自定义输出格式宏
+proc format library=sashelp;/*指定保存的逻辑库地址*/                                                                                                                                                                                                                                                   
+        value $agegroup                                                                                                                                                                                                                                          
+              low-12='低年组(11-12)'                                                                                                                                                                                                                             
+              13-14='中年组(13-14)'                                                                                                                                                                                                                             
+              15-high='高年组(15-16)';                                                                                                                                                                                                                             
+/*low和high考虑了数据覆盖不到的范围*/  
+Run;
+
+Proc format;
+Value $gender
+'M'='Male'
+'F'='Female'
+ 		Other = '其它';
+/*other考虑了其它的情况*/
+Run;
+
+搜索逻辑库中的format文件
+Options fmtsearch=(逻辑库1 逻辑库2)    
+                                      
