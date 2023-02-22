@@ -1,0 +1,248 @@
+                                                                创建一个DM数据集
+
+
+
+
+临床试验与药物上市流程
+一期、二期、三期、四期
+在上报研发计划统计报表过程中，需时时刻刻依据标准如CDISC出报表
+CDISC Clinical Data Interchange Standards Consortium
+临床数据交换标准协会
+临床数据交换标准
+CDISC 医药SAS程序员的黄金数据标准
+放便临床实验传递与提交的数据标准
+起先是一个民间标准，后来发展成行业推荐御用标准
+让数据说相同的语言
+
+CIDISC标准 - 
+SDTM数据存储标准化
+Adam数据分析标准化
+
+一、SDTM的基本概念
+用于临床实验数据的标准化
+
+分类：
+记录人口统计学数据的数据集叫DM domain
+记录副作用的数据集AE（Adverse Event） domain
+
+每个Domain里有大量变量名，以数据集名开头，如AE……
+长度8位，都有标准化标签，长40，这些是通用要求
+
+SDTM的变量分五类：
+Identifier,topic,timing,qualifier,rule
+
+
+
+Identifier用于编号的变量，比如STUDYID, USUBJID
+
+
+
+USUBJID用于记录每个患者的唯一ID号码
+
+Topic 数据集的一个核心
+
+如，副作用数据集AE，最关心的是副作用的名称
+
+
+Timing表示日期时间数据，时间要存为字符型，ISO8601格式
+例：2020-05-13T05:33:32
+没有时间的精确到2020-05-13，如身高体重
+
+时间差：
+AESTDTC副作用开时的时间
+AESTDY实验第几天产生副作用，数值型
+AEENDTC副作用结束时间
+AEENDY结束时间是实验后第几天，数值型
+
+Qualifier
+分五种：
+
+Grouping Qualifier对topic的补充，如LB实验指标中，是血检还是药检如LBCAT，描述类别，
+Result Qualifier 检测结果存在这里如LBORRES
+Synonym Qualifier 对topic的修饰，LBTEST别名指示修饰
+Record Qualifier是对记录的修饰，如：如果一条记录是基准线值，就记为LBBLFL变量，对整条记录定位的补充
+Variable Qualifier 其它变量的修饰，如白细胞5，没有单位，无意义，放在LBORRES中，单位放在LBORRESU中
+
+
+Rule
+跟规则相关的信息，放在实验设计相关的domain中。
+
+CIDISC标准是将不同的数据放在不同的数据集中，每个数据集有自己的名称和要求。
+
+
+变量存在度的要求
+
+分三种：
+Req要求的，必须存在（必填）
+Exp希望存在的，有最好，没有也行
+Perm允许存在，是否填加根据实验设计
+
+以LB （Laboratory Test Results）实验为例
+
+
+几列分别是：名称、标签、数据类型（SAS中只有两种，Char 和 Num ）、取值范围、角色类型、变量简介、Core是存在度要求。
+
+临床实验设计收集的数据一定要上交。
+无法纳入标准的，放入补充数据集与自定义数据集中。
+
+能补充的补，不能补的自定义
+
+
+补充数据集：命名标准，以SUPP开头+原本数据集的名
+
+如心电图数据
+
+基本要求：可追述性
+
+自定义数据集
+
+常用的都逐渐标准化了，较少需要自定义，会逐渐更新
+
+SDTM IG标准化文档 -DM数据集
+
+SDTM IG（标准文档）第62页
+DM(Demographics)人口统计学，人的信息 年龄、性别、国籍、。。实验开始、结束等信息。
+接手一个临床实验项目，或要了解一个患者，从DM开始看起。
+
+
+例：临床实验II期，5名患者
+这个实验的DM数据集包含5条，几个患者就几条，对该例做SDTM/DM数据集.
+
+
+DM数据集标准变量表介绍：
+
+
+Studyid实验ID世界唯一
+Domain
+usubjid记录的唯一id
+Subjid
+RFSTDTC一般实验开始时间，患者第一次吃药时间
+RFENDTC一般实验结束时间，患者最后一次吃药时间
+RFXSTDTC严格实验开始时间，实验特殊时
+RFXENDTC严格实验结束时间，实验特殊时
+RFICDTCM卖身契，签协议的时间
+RFPENDTC患者参与的最后一个日期end of Participation，按日期排序找到最后一个
+DTHDTC跟死亡相关的，死亡日期，death time
+DTHFL跟死亡相关的，死亡指示，death flag
+SITEID站点编号
+INVID调研者ID，investigator
+INVNAM调研者名
+BRTHDTC出生日期
+AGE年龄
+AGEU年龄单位unit
+SEX性别
+RACE种族
+ETHEIC信仰
+ARMCD计划分组编号
+ARM计划要给该患者分到什么组实验组
+ACTARMCD实际分组编号
+ACTARM实际被分到了什么组，siteid第一位是1则是实验组，3对照组，具体的查看SAP实验计划方法说明
+COUNTRY国家，用ISO国家编号
+DMDTC收集时间
+DMDY收集天数
+
+/*=================定义DM标准变量============*/
+/*读原始数据，创建DM数据集，创建的变量会在后面列*/
+Libname raw “”;
+Data dm1;
+Set raw.dmmr;
+Length studyid $10;
+Studyid=’XYZ-001’;
+DOMAIN=’DM’；
+Usubjid=strip(studyid)||’-’||strip(subject);
+Subjid=subject;
+Run;
+
+/*创建RFSTDTC、RFENDTC，从exto中复制（在Raw数据集的Exto数据集）到ex数据集*/
+Data ex;
+Set raw.exto;
+Exdtc =put(input(compres(reportdt),date9.).ymmdd10.);/*compress去空格，input读字符转为date时间戳，put输出为yymmdd格式*/;
+Run;
+Proc sort data=ex;/*过程处理，按exdtc排序*/
+By subject exdtc;
+Run;
+/*找出第一条最后一条*/
+Data ex1 ex2;/*同时生成两个数据集，分别存放实验开始时间和实验结束时间*/
+set ex;
+By subject;
+If first.subject then output ex1;
+If last.subject then output ex2;
+Run;
+
+/*上面是分别做分表，把三个分表Merge起来做一个主数据集*/
+Data dm2;
+Merge dm1 ex1(keep=subject exdtc rename=(exdtc=rfstdtc)) ex2(keep=subject exdtc rename=(exdtc=rfendtc)) ;/*只保留所需的列，并命名为标准名*/
+By subject;
+Run;
+
+/*原始数据集DTH跟死亡相关，DTHDAT_RAW是死亡时间*/
+Data dth;
+Set raw.dth;
+Dthdtc = put(input(compress(dthdat_raw),date9.),yymmdd10.);
+Dthf1=’Y’;
+Keep subject dthdtc dthfl;
+Run;
+
+/*merge到主数据集
+定义变量SETID、BIRTHDAY、AGE....针对一个表的操作起一个DATA，最后merge到一起*/
+Data dm3;
+Merge dm2(drop=siteid) dth;/*原有的siteid数值型不对，删掉*/
+By subject;
+Siteid = substr(subjid,1,4) ;/*从另一字段截取前四位*/
+Siteid=scan(subjid,1,’-’);/*或以-为分隔符取第一位，相当于python的split(“-”)*/
+Brthdtc = strip(put(brthdat_yyyy,best.))||’-’||strip(put(brthdat_mm,z2.))||’-’||strip(put(brthdat_dd,z2.))/*best.适应字符串长度，z2格式长度2，前面补0，strip去掉前后空格，compress去掉全部空格*/
+/*年龄不全，先清空*/
+Age = .;
+Age_raw=’’;
+Age = int((input(rfstdtc,yymmdd10.)-input(brthhdtc,yymmdd10.))/365.25) ;/*开始日期-生日得天数 int(input(‘123’))*字符型转数值型/
+Ageu = ‘YEARS’;
+Sex =substr(sex,1,1);/*Female，Male取第一位，第三性别放到SUbPPBM里*/
+length race $50;
+If american_indian=1 then race = ‘American Indian’;
+If asian=1 then race = ‘Asian’;
+If black = 1 then race = ‘Black’;
+If native_hawaiian=1 then race = ‘White’;
+If other =1 then race = ‘other’;/*subppbm补集中加其它种足*/
+Length arm $20 armcd $8 actarm$20 actarmcd $8
+If substr(siteid,1,1)=’1’ then do;/*siteid第一位1为实验组*/
+Arm = ‘Treatment’;
+Armcd=’TRT’;
+End;
+Else if substr(siteid,1,1)=’3’ then do;/*siteid第一位3为对照组*/
+Arm=’Placebo’;
+Armcd = ‘PLA’;
+End;
+Actarm = arm;
+Actarmcd=armcd;
+Run;
+
+/*以上定义了标准化变量名数据集*/
+/*=======做变量的标签，调整变量顺序========*/
+Data dm4;
+Retain studyid domain usubjid subjid xxx;/*调整数据集变量列顺序*/
+/*或用attrid ...调顺序*/
+Set dm3;
+Label studyid=”study Identifier”;/*把标准化文档中的标签列的值对应粘过来*/
+Domain=”。。。”/*把标准化文档中的标签列的值对应粘过来*/
+/*……*/
+Run;
+
+/*====一般会有一个模版参考，方便创建，后面再合并起来===*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DM数据集是最基本数据集，后面的数据集一定会合并DM
