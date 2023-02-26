@@ -1,0 +1,186 @@
+第6课SDTM数据集分类
+
+SDTM的全称是Standard Data Tabulation Model，标准数据制表模型，是对实验数据标准化的模型。建立CDISC的SDTM数据集的目的是将病例报告表数据以统一的标准形式提交给监管机构，使得提交的数据可以被正确解读，包含文件的名称、变量名称、类型、标签、格式、角色和控制术语。
+7尖44个数据集
+
+
+
+
+一、Special-Purpose Domains 特殊目地数据集
+跟实验者本人相关的数据集
+有4类，评论CO，人口统计学DM，患者时期(时间)元素SE，患者来访SV
+
+
+CO 医生手写的文本 无法标记化 记在这里
+需与其它数据集相连，对应哪个数据集哪个患者的哪条记录
+放在它那一行的COVL,1,2,3中每个200字符，装不下补到下一个里，substr()截取
+
+
+DM，参考上一章
+
+SE 患者时期元素：
+每个患者试验过程中经历的每个时期和元素的时间信息，这些数据放在SE中。
+
+患者来访信息SV：
+患者来访时间放这里。
+
+
+二、Interventions 干涉干预类
+
+CM 伴随用药Concomitant and Prior Medications
+EX and EC 实验用药Exposure ，收集实验用药EC
+PR过程流程Procedures
+SU物质使用substance Use
+
+
+
+1、CM 有与实验药物有关的药，有无关的药
+
+
+
+2、EX 实验用药，接触，计划用药，EC实际用药
+
+EX根据实验记录
+EC患者自行记录
+
+EX包含 EXTRT药物名称 EXDOSE药物剂量 EXDOSU药物剂量单位 EXDOSFRQ药物按剂量服用的频率 EXDOSFRM药物形态 液体、胶囊、含服片
+EC包含ECOCCUR指定该次药物服用是否发生occur，ECDOSE记录剂量，ECDOSU记录剂量单位
+
+分析时一般使用EX，根据实验设计来的，更加准确
+
+
+
+
+3、PR 记示患者治疗跟诊断相关的过程
+
+不知道的情况记录下来放在PR中，实验过程中比如拔牙了
+
+
+PRTRT手术名称 PRSTDTC手术开始时间 PRENDTC手术结束时间
+
+SU非药物使用情况影响信息
+
+咖啡 烟 酒 等
+
+
+SUTRT名字 SUCAT大类 SUDOSE剂量 SUDOSU使用剂量单位 SUDOSFRQ使用频率
+SUSTAT是否被记录 SUREASND没有记录的原因
+
+三、Events事件类，不在计划内发生的突发事件
+
+
+
+AE副作用 Adverse Events
+CE临床事件 Clinical Events
+DS处置 Disposition
+DV实验计划偏差 Protocol Deviations
+HO医疗事件Healthcare Encounters
+MH既往药史Medical History
+
+1、AE
+
+
+AETERM副作用名称
+AEDECOD副作用标准名称
+
+AESEV副作用严重程度
+AEREL副作用是否与药物相关
+AEACN副作用发生后采取的措施
+AEOUT副作用的结果
+
+AESCONG副作用是否导致先天缺陷
+……
+
+AESTDTC副作用开始时间
+AEENDTC副作用结束时间
+
+名称类变量：AETERM AEDECOD, 不仅要包含名称类别还要包含所属更高级身体组织、系统等副作用详细信息，记录在Meddra文件中
+比如Headache头疼，所属的上级目录依次为：
+Nervous system disorders神经系统紊乱 > Headaches > Headache NEC > Headache
+
+属性类变量：用来标记每一条AE变量的属性划分
+
+AESEV严重程度 从轻到重是 MILD, MODERATE. SEVERE
+AEACN 采取的措施 DRUG, WITHDRAWN, DOSE REDUCED, DOSE NOT CHANGED, UNKNOWN or NOT APPLICABLE 用药、药量减少、退出实验等
+AEOUT 结果 死亡 解决中 已解决等。
+
+评价类变量：
+
+AESCONG是否导致新生儿先天缺陷和异常
+AESDISAB是否导致残疾
+AESDTH是否导致死亡
+AESHOSP是否导致住院
+
+
+时间类变量：
+
+
+
+AESTDTC副作用开始时间
+AEENDTC副作用结束时间
+AESTDY副作用开始天数
+AEENDY副作用结束天数
+AEDUR副作用持续时间变量
+
+其它事件类似AE，也需要包括名称、属性、开始结束日期
+
+四、发现类数据集Findings
+用于特殊疾病或药物中，
+常用的EG (ECG Test Results)心电图测试，
+IE (Inclusion/Exclusion CriterionNot Met) 每名患者与允许参与实验条件出入的地方，
+LB (Laboratory Test Results(LB)) 血检尿检指标 大多数实验都需要最重要的数据，
+QS调查问卷 有没有效 患者说的也要参考 偶尔治愈 常常缓解 总能安慰 安慰效果就是患者说的算，生活质量等
+VS (Vital Signs)人体基本信息 身高 体重 脉搏 血压等
+
+肿瘤数据：RS（Disease Response），TU（Tumor Identification），TR(Tumor Results)
+
+
+融汇贯通, 发现数据集基本都是实验检测结果
+通用变量：
+名称含...TEST，LB中叫LBTEST，VS中叫VSTEST……
+检测名称标准名含...TESTCD，LBTESTCD,VSTESTCD...，长不超8位，
+简写的放在...TESTCOD?中，LBTESTCOD,VS...
+检测分类...CAT
+...SCAT
+实验结果...ORREST
+实验结果单位...ORRESU
+储存字符型标准化结果...STRESC
+储存数值型标准化结果...STRESN
+标准单位...STRESU
+患者来访名称VISIT，所有数据集一样，没有区分的前缀
+来访次数，第几次VISITNUM，所有数据集一样，没有区分的前缀
+检测时间/参考日期...DTC/...DY，QSDTC问卷填写时间，LBDTC血检尿检时间
+
+
+五、发现相关类数据集
+基本可以归到发现类，数据相对没有那么标准
+例：FA中的FATEST不是名字，是观察内容，FAOBJ是观察对象，FAORRES严重程度
+
+
+六、实验设计类
+记录实验设计的情况，由SAP文档生成，查看它可以了解实验是怎么设计的。
+有六个数据集
+TA 实验分组 Trial Arms 
+TD实验疾病数据 Trial Disease Assessment
+TE实验时期 Trial Elements
+TV实验来访计划Trial Visits
+TI 实验收人标准Trial Inclusion/Exclusion Criteria
+TS实验总结Trial Summary
+
+
+
+
+七、关系型数据集 
+SUPP 补充数据集 Supplemental Qualifiers(SUPP--datasets)
+RELREC关系数据Ralated Records，伴随用药引起了副作用，要记录这一关系,某条副作用和某条伴随药物连接起来
+
+这两个数据值都是依赖其它数据集的补充数据集
+
+
+
+
+
+
+变量结构内容相似
+详查SDTM IG文档
+
