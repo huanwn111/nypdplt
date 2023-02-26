@@ -1,0 +1,87 @@
+                                         补充数据集、自定义数据集和其它
+
+
+
+SUPP补充数据，CUSTOM DOMAIN自定义数据集，SUPP补充数据集
+
+一、SUPP补充数据 IG文档368页，
+
+
+STUDYID
+RDOMAIN与哪个主数据集对应
+USUBJID
+IDVAR(Identifying Variable ) 使用的哪个变量，如...SEQ，...GRPID
+IDVARVAL(Identifying Variable Value)使用的变量的值是什么，要转成字符型
+QNAM(Qualifier Variable Name) 不长于8位的描述，在用于分析的ADAM数据集中可以转化成变量名称
+QLABEL(Qualifier Variable Label)具体的描述
+QVAL(Data value)具体的这个数据的值是多少
+QORIG(Origin)值的来源如CRF病例、直接安排的assianged、Derived计算来的，
+QEVAL(Evaluator)谁作的
+
+
+
+可以放的东西，与主数据集相关的东西
+例：实验人口的FLAG，SAP中受试人群的人口分类
+QNAM就是人口名称的缩写
+QLABEL人口全称，
+QVAL值，Y是，N否
+QORIG来源
+QEVAL 谁作的 sponsor
+
+根据统计图表的需求看是否纳入统计图表
+
+例：AE副作用中，实验期间副作用TEAE(treatment-emergent adverse event)，在吃药期间7，14，28天（药物半衰期）之后的副作用也算TEAE，
+吃药前就头晕，吃后加重也算TEAE，
+本身头很晕，吃后减轻，这种不算TEAE，副作用没有加重或保持不变，
+
+创建补充数据集变量代码：
+
+Libname data “D:\”;
+Set data.ae_trtem;
+If input(rfstdtc,yymmdd10.) <= input(substr(aestdtc,1,10),yymmdd10.) <= input(rfendtc,yymmdd10.) +14 then trtem = ‘Y’;/*实验开始时间和结束时间+14天之间的都算TEAE，打标记*/
+Else trtem = ‘N’;
+Run;
+
+/*将数据生成到SUPPAAE中*/
+Options validvarname=upcase;/*变大写*/
+Data suppae;
+Retain studyid rdomain usubjid idvar idvarval qnam qlabel qval qorig qeval;/*调顺序*/
+Set ae;
+Rdomain = ‘AE’;
+Idvar = ‘AESEQ’;
+Idvarval = strip(put(aeseq,best.));
+Qnam = ‘TRTEM’;
+Qlabel = ‘Treatment-Emergent Adverse Event’;
+Qval = trtem;
+Qorig = ‘DERIVED’;
+QEVL=’’;
+Keep studyid rdomain usubjid idvar idvarval qnam qlabel qval qorig qeval;
+Run;
+
+二、自定义数据集CUSTOM DOMAIN
+
+1、看SDTM标准，确保要加的确实不在标准中
+2、考虑类别，干涉、发现、事件等
+3、找到每个类中的几个数据集，选它们共同required的变量，看自己的变量怎么放进去
+确实没地方放的，则需要添加额外变量，参考同类型数据集
+4、给自定义数据集取名字，命名规则以XYZ开头的两位大写字母，XYZ排序集中排最后，方便定位
+
+
+
+三、Controlled Terminology 控制术语
+
+对SDTM里某些特定变量的值进行规范的一套规定
+
+
+IG文档中controlled Terms,Codelist or Format这一列有些蓝色的，点击打开网页，筛选想查看的信息，也可下载
+例：查看Domain相关的规则，打开Controll列的SE蓝色连接，在codelist Name列筛选Domain，
+看CDISC Submission value这一列，就是Domain的取值列表，必须用允许的，不能自己编。
+CodelistExtensible列显示Yes，意思是没有的可以加新变量，比如自定义数据集。
+
+
+例：同样方法，筛选DM中的种族race，它的Codelist Extensible列是No，不可扩展。
+没有的种族值可以选Not reported或unknown
+双种族的，没有，放在SUPPDM人口统计学补充数据集中
+
+
+Pinnacle21 Validator Report工具，读取监测据集是否符合CDISC标准，不符的会有标记
