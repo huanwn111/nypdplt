@@ -1,0 +1,158 @@
+                                                             第7课LB数据集变量创建
+
+
+LB数据集复杂且重要，
+判断一个药是否有效，两种方法，主观判断、客观判断
+主观判断：患者调查问卷
+客观判断：检测结果，血检尿检，记在LB数据集中，
+
+IG文档181页，
+
+
+
+
+
+
+
+STUDYID研究ID study identifier
+DOMAIN分类所属 domain abbreviation
+USUBJID唯一研究对象ID unique subject identifier 患者ID连接STUDYID做成
+LBSEQ 序列号sequence Number 
+LBGRPID相互关联的设组，数据集内的关系Group ID
+LBREFID 与其它数据有关设成一对 数据集外的关系Specimen ID
+LBSPID Sponsor-Defined Identifier 实验设计者ID
+LBTESTCD 标准检测名称（简称） Lab Test or Examination Short Name
+LBTEST测试的是什么值，检测名称Lab Tet of Examination Name，例如：红细胞测试，血小板测试，可点Control Term列蓝色的可点查看常见固定检查名称
+
+
+
+
+
+LBCAT 检测分类 Category for Lab Test， 如血检 尿检等
+LBSCAT检测细分分类 Subcategory for Lab Test
+LBORRES (Result or Findings in Original Units)测试值
+LBORRESU (Original Units)测试值单位
+LBORNRLO (Reference Range Lower Limit Org Unit) LO指标范围最低限low
+LBORNRHI(Reference Range Upper Limit in Org Unit) HI指标范围最高限high
+
+//带STR表示的是在标准单位下的取值，OR是原始型式数据
+LBSTRESC 字符型结果标准数据集，有则加入，没有的留空，如一个数据是字符那这加在这里，下面N数值型则为空标记
+LBSTRESN 数值型结果标准数据集 
+LBSTRESU 标准单位
+LBSTNRLO 标准指标下限
+LBSTNRHI 标准指标上限
+
+指标标准参考药厂提供的文件，有些可以直间用，有些要处理，比如乘因子转变成标准
+
+LBBLFL (Baseline Flag)基准线标记
+LBDRVFL（derived Flag）移除标记，计算出来的
+VISIT患者来访
+VISITNUM来访日期
+LBDTC实验测试时间，比如抽血，抽的时间，
+LBENDTC实验什么时候有反应，抽完血回家了，滴液1天才有反应，
+LBDY天数
+LBTPT对同一次来访的细分，同一次来访的多次测量planned Time Point name,
+LBTPTNUM对同一次来访的多次测量的第几次 planned Time Point Number
+
+
+LB数据集创建变量代码：
+
+/*创建逻辑路径*/
+Libname raw “D”\labraw原始数据”;
+
+Data lab1:
+Set raw.lab;
+Run;
+
+Proc import datafile=’D:\指标文件.xlsx’ dbms=xlsx out=lbtest replace ;
+Run;
+
+Proc sort data=lab1;
+By lbcat lbtest;/*以分类（不同类中的检测名有相同）、检测名排序 */
+Run;
+Proc sort data=lbtest;
+By lbtest;
+Run;
+/*创建Lbstresn标准剂量转化，Lbstresc */
+/*合并上面两个数据集*/
+Data lab2:
+/*合并导入的数据*/
+Merge lab1(in=a drop=lbtestcd) lbtest(drop=lborres);//保留a，去掉多余的，
+By lbcat  lbtest;/*以分类（不同类中的检测名有相同，看日志提示）、检测名merge */
+
+If a;
+
+/*变量名不标准的更改*/
+Rename orres=lborres
+Orresu=lborresu
+Normlo = lbornrlo
+Normhi = lbornrhi;/*重命名，老名=新名*/
+
+/*STD标准单位变量创建*/
+If orres ne=’’ then  Lbstresn = input(orres,best.)*factor;/*标准剂量转化 有些缺失值best转换可能出问题，判断不为空的处理*/
+Lbstresc =strip(input(lbstresn,best.));/*best万能格式转化，通常搭配strip去掉多余空格 lborres drop掉 重负了*/
+
+Run;
+/*以上代码可以先简单思路实现merge lab1 lbtest;，再丰富 in=a drop=lbtestcd，看日志提示改by lbcat lbtest，完善缺失的 改名rename，标准单位创建*/
+
+
+
+
+
+/*创建LBSTAT（completion status）实验是否完成，LBREASND(reason test not done)没有完成的原因,LBBLFL (Baseline Flag)基准线标记，非常重要，在实验开始前最后一次测量的值，比如减肥药没吃时的一个原始状态*/
+/*定义LBBLFL，需要实验开始时间*/
+Data dm;
+Set dm4;
+Keep subjid rfstdtc;
+Run;
+Proc sort data=lab2;
+By subjid;
+Run;
+Data lab3;
+Merge lab2(in=a) dm;
+By subjid;
+If a;/*只保留a存在的记录*/
+n = _n_;/*_n_是data步被执行的次数，可以理解为记录的行，把行号加到表中用于后面base部的合并*/
+Run;
+/*生成表格后，筛选记录，查找实验开始时间，找基准线*/
+/*选中LBDT列做处理*/
+Data base;
+Set lab3;
+If strip(put(input(compress(lbdt,’-’),date9.),yymmdd10.))<=rfstdtc;/*早于实验开始时间的过滤出来*/
+Run;
+/*实验开始的最后一条时间*/
+/*排序*/
+Proc sort data=base;
+By subjid lbcat lbtest;
+Data base;
+Set base;
+By subjid lbcat lbtest;/*每名患者只保留一条所以按患者id 检测分类 检测名称 查询筛选，if最后一条时保留*/
+If last.lbtest;/*找到最后一条合并，事先要排序*/
+/*合并记录，要找到原来的记录位置，在lab3表创建的一步把行号列加上*/
+Lbblfl = “Y”;
+Keep n lbblfl;/*n是lab3表是记录的行*/
+Run;
+/*与原表合并*/
+Data lab4;
+Merge lab3 base;
+By n;/*以记录编号为外键关联两表合并*/
+Run;
+/*运行后，发现有些记录LBBLFL列就被打上了Y，这列就是基准线值*/
+/*LBDRVFL（derived Flag）计算出来的*/
+/*VISIT，VISITNUM，患者来访，来访日期 原始数据集有了*/
+/*LBDTC实验测试时间，比如抽血，抽的时间，LBENDTC实验什么时候有反应，抽完血回家了，滴液1天才有反应，LBDY天数*/
+/*LBTPT对同一次来访的细分，同一次来访的多次测量planned Time Point name,
+LBTPTNUM对同一次来访的多次测量的第几次 planned Time Point Number*/
+
+/*创建LBSEQ为同一个患者的实验创建序号1、2、3....，可以把同一患者的整合*/
+Proc sort data=lab4;/*排序，把同一患者ID的排在一起*/
+By subjid lbcat lbtestcd visitnum;
+Run;
+Data lab5;
+Set lab4;
+By subjid;
+If firt.subjid then lbseq=0;
+Lbseq+1;/*累加，set就是逐行读的循环*/
+Run;
+/*除了DM数据集，其它都有这个LBSEQ*/
+/*以上变量，80%实验都会有*/
