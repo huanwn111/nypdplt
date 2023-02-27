@@ -1,0 +1,251 @@
+                                                      I ADaM标准概念
+                                                      
+一、介绍与使用思路示例 
+
+
+
+试验设计收集数据 》 把原始数据转让化为SDTM标准数据 》 把SDTM转化为ADaM标准数据
+》使用ADaM数据集生成统计图表 》 撰写药物上市申请文档
+
+
+
+SDTM偏向数据标准化，不同数据集结构内容和大量变量都相同，收集的数据都差不多，F女M男，血检等名称指标一样，
+ADaM偏向数据可分析性，数据集变量意义根据试验不同可以调整，同一名称在不同试验中可能意义不同，自行指定的，
+
+直接从SDTM创建统计图表会添加大量计算语句，导致图表程序冗长易出错，所以用ADaM做一个中间转化偏向分析可用。和工程编程里的分层结构差不多。帮助数据分析工作更标准、更快速、更准确。可以共用一些公共的变量数据。
+
+例：从一个体重变化表，要展示体重在试验开始前、开始后1星期、2星期、3星期的数值和变化量，以及相关统计量。
+不用ADaM思路：找到SDTM中的VS（用户信息）数据集，先找到基准线值（VSBLFL=Y的值），提取出来，计算和测量值的差，统计出来，再合并EX看患者吃药情况。如此一翻，程序冗长。
+ADaM思路：在ADaM数据集中把针对这个试验的需要的数据都安排上，
+本例除了每条记录的测量值，还包括测量值与基准线值的差，可命名为chg（change）变量列。
+再加上其它要统计的SAFFL变量测试值，表示安全人口（从EX中变化来）Y表示安全，可以用于统计。图表生成统计程序只需提取需要的数据列生成就可以了。
+
+
+二、ADaM IG文档
+1.2版，看第2章
+五大基础原则：
+1、清晰无歧义clearly and unambiguously
+2、可追述性，每个数据变量都能找到来源traceability
+3、能被常用软件使用SAS等readily
+4、Metadata原数据，定义完了要存储在原原数据的文件中
+5、Analysis-ready集分析性 定义出足够支持分析的变量 可以只包含分析用的数据，SDTM是只要收集了就要制作到数据集里。
+
+
+Traceability可追述性 where and who：
+Metadata tracebility，如果是创建出来的，要有一个说明文档，说明是怎么创建出来的，如上面例子中那个身高值基准线与实验数据的差值列，是怎么来的，要在metadata中写清楚由什么创建而来
+Datapoint traceability，数据点层面的可追溯性，从哪个数据集来的，方法是众口保留SEQ变量，关联表，顺藤摸瓜。
+存在度：
+SDTM 有 Required, Expected, Permissible
+ADaM 有 Required, Conditionally Required 条件性必须 特定试验中必须, Permissible
+
+
+
+                                                      II  ADaM数据结构 ADSL BDS OCCDS 变量介绍
+                                                      
+                                                      
+
+对比IG文档创建
+
+
+
+ADSL格式 每个患者一条记录 subject level analysis dataset，可以用SDTM中的DM导过来；
+BDS 基础数据结构 basic data structure，要求每个患者每个参数每个时间点有一条记录，命名方法：AD+主要数据集名称，如ADLB ADVS，一般会用finding、finding about的数据类型按BDS结构生成AD数据集，LB数据集比如每个时间点的实验生成更方便。
+OCCDS发生数据Occurence Data，SDTM中的Event数据集一般做成OCCDS，把发生的事件按照层级划分列出来，比如某个副作用的所属层级，AE做成ADAE后，仍要保留这些层级名称变量，ADaM_OCCDS.pdf 是它的IG文档；
+
+每个ADaM数据只能属于一种格式结构
+BDS结构类最多
+
+
+
+
+一、ADSL变量：
+STUDYID 来自DM
+USUBJID 来自DM
+SUBJID
+SITEID 实验点
+SITEGRy 小写代表数字 实验点组 用于分析 一般要分组 经如地区是省级医院、地级、县级
+SITEGRyN 分组编号，第几组
+AGE 来自DM
+AGEU
+AGEGRy 年龄分组 中青老 用于分析 一般要分组
+AGEGRyN
+SEX
+RACE
+RACEGRy
+RACEGRyN
+
+/*Flag变量，值是Y和N的*/
+SAFFL 安全人口，至少吃过一次药， Safety Population Flag
+ITTFL 是否有意向参加实验 Intent-to Treat Population Flag
+
+/*跟实验相关的变量*/
+ARM (Description of Planned Arm) 来自DM
+ACTARM (Description of Actual Arm) 来自DM
+TRTxxP 计划的临床实验分组Planned Treatment for period xx，小写的xx代表两位的数
+TRTxxPN N是数值，分组序号
+TRTxxA 实际的临床试验分组 Actual Treatment for Period xx
+TRTxxAN N是数值，分组序号，xx两位数字用于同一人交叉试验了两组，用于标记第一次吃了什么，第二次吃了什么
+
+/*与试验时间相关的*/
+TRTSDT 试验开始日期，TRT表示treatment，D表示Date，数值型
+TRTSTM 试验开始时间 Time，数值型
+TRTSDTM 试验开始的时间日期，数值型 用于分析，时间多种格式都包括
+TRTSDTF上面变量加了F，原本没有填补，Flag
+TRTSTMF原本没有填补，Flag
+TRTEDT 表示实验结束天
+TRTETM结束时间
+TRTEDTM结束时间日期
+TRxxSDT xx第一段时间 第二段时间天始天
+
+/*subject-level Trial Experience Variable*/
+EOSSTT整个study实验后，患者结束研究的时候是什么状态 End of study status，完成了还是失联了
+EOSDT 结束的日期End of Studdy Date
+DCSREAS什么原因不再参与实验Reason for Discontinuation from study
+EOTSTT treatment结束时患者状态，比study范围小，end of treatment status
+DCTREAS 结束原因
+DTHDT死亡日期Date of death
+
+以上变量都非常非常重要
+
+
+二、BDS变量：
+
+/*通用变量列表*/
+STUDYID
+USUBJID唯一标识
+SUBJID
+SITEID
+ASEQ 序号Analysis Sequence Number，做好后，数据集排序，从1递增加序号
+
+
+/*记录级变量Record-level treatment variables for BDS Datasets*/
+TRTP 不同于ADSL，ADSL以患者为记录，一个患者多次实验，有xx，BDS是记录级的细分数据结构，一条记录就是一条，不会细分。Treatment plan
+TRTPN 
+TRTA
+TRTAN
+
+/*==时间级变量Timing Variables for BDS Datasets==*/
+ADT ( Analysis Date)
+ATM ( Analysis Time)
+ADTM Analysis DateTime)
+ADY ( Analysis Relative Day) 不复杂的话，从LBDY来，或者根据实验文档计算差值得来
+
+/*开始*/
+ASTDT (Analysis Start Date)开始日期
+ASTTM (Analysis Start Time)开始时间
+ASTDTM (Analysis Start DateTime)开始日期时间
+ASTDY ( Analysis Start Relative Day) 
+
+/*结束时间*/
+AENDT
+AENTM
+AENDTM
+AENDY
+
+AVISIT患者来访
+AVISITN
+ATPT( Analysis Timepoint)分析时间点
+ATPTN( Analysis Timepoint Num)时间结点序号
+
+PARAM(Parameter)参数，测的这一项是什么，SDTM中放在Test中，BDS中是放在PARAM中，格式一般是 测试名称（标准单位）
+PARAMCD参数简写标准名Parameter Code
+PARAMN(n序号，方便排序)
+PARCATy(category1，2，3)
+PARCATyN 序号
+AVAL测量结果analysis value
+AVALC 标准的简写code
+BASE (Baseline Value) 基准线值，重要，用SDTM LB中的LBBLFL列筛选Y，合并原本变量
+BASEC 标准基准线值简写 Code，SDTM LB数据集中的LBSTRESN列
+CHG 变化，测量值-基准值，change from baseline
+PCHG 改变占基准线值的比率，percent change from baseline，分母为0时设为缺失值，用nmiss(aval,base)=0计算有几个缺失值
+SHIFTy (shift y) 改变 状态与基准线的对应值变化 如Normal to bad
+SHIFTyN (shift y(N)) 
+CRITy用户自定义的评价特点和标准 criterion，如血压SYSBP>90
+CRITyFL如果符合就Y
+DTYPE 按什么方法生成的新变量，Derivation Type
+ANRIND (analysis reference range indicator)分析值指标是高还是低，用它制作SHIF变量
+BNRIND (baseline reference range indicator)参考基准线值指标是高还是低，用它制作SHIF变量
+ABLFL(Baseline Record Flag) 基线记录标记
+ANLzzFL(Analysis Flag zz)分析数据集符合某个要求时标记为Y
+
+/*追述性变量traceability*/
+/*datapoint-level数据点级别*/
+SRCDOM (Source Data)从哪个数据集来的
+SRCVAR (Source Variable)从哪个变量来的
+SRCSEQ (source Sequence Number)从哪条记录来的
+
+三、OCCDS
+不常用，基本都用在AE副作用数据集中，导过来修改
+--TERM 如 AETERM副作用名字
+--DECOD 标准名
+--BODSYS属于哪个身体系统
+
+下节预告：
+创建ADaM记录与创建数据有什么样的标准
+
+
+部分创建变量代码示例：
+Data adsl1:
+/*ADSL变量创建*/
+Set sdtm.dm;/*一般都是首先把DM数据集导set过来*/
+If siteid in (‘x’,’y’,’z’) then sitegr1 = ‘1’; /*设置实验组 if是分组条件*/
+If 18 < age < 65 then agegr1 = ‘18-65’;
+Else if age > 65 then agegr2 = ‘老年组’;
+/*日期格式转换，字符转数值input(‘123’)，数值转字符put(123) */
+/*……*/
+/*创建BDS变量*/
+/*创建PARAM变量*/
+Param = strip(lbtest)||strip(lbstresu);/*用||或cat连接两列，结果如‘Albumin(g/L)’*/
+
+Run;
+
+                                               III  在ADaM中自定义记录和变量
+
+自定义变量及要求
+IG文档 4.2.1 65页
+
+
+
+
+
+
+
+
+创建新变量的规则Rule1: 
+1、不跨参；
+2、和AVAL和BASE相关；
+3、和BASE的变化相关；
+
+比如CHG
+例：做一列身高的对数列：
+Data advs2;
+Set advs;
+If paramcd = ‘WEIGHT’ then aval2 = log(aval);
+Run;
+
+创建新记录的规则Rule2:
+对AVAL的变化只要不满足Rule1就要创建新记录，例如此前变化的log身高又有其它列的影响变化
+
+
+
+规则Rule3:
+创建分析时间点，每条记录需要一个DTYPE说明怎么创建的
+
+
+
+缺失值的处理 LOCF用前一个值填充, WOCF用之前最差的值填充，这种不能创建新的数据，只能创记新的记录
+
+规则Rule4:
+同参数的多记录而来要单开一行，比如一个值是用两个记录计算得来
+
+
+规则Rule5：
+跨参的计算要创建记录
+如BMI身高体重指数
+
+
+规则Rule6:
+
+基准线的定义有多种时，每种定义都需要额外创建新记录
+
+
