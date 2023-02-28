@@ -1,0 +1,129 @@
+                                           临床试验设计师工作前准备
+                                           
+一、软件
+SAS桌面端：基础版，企业版打开会自动加载宏程序和逻辑库
+服务器端SAS：注意记住远程登录账号密码，可能需要开VPN
+
+
+
+
+二、编程要求和流程
+2.1 查看文件夹路径
+
+例：
+Data储存数据：RAW原始数据、SDTM标准数据、ADaM分析数据
+Document统计文档：CRF病例报告、SAP&Protocol试验设计与原始设计文档、SPEC表生成说明文档、Other其它
+Output统计分析图表储存：figure、listing、table
+Programs储存SAS程序：macro宏 公用程序模块、production制作 开发、validation检验 测试、steup.sas：通常会inclue进来逻辑库
+
+项目路径不清晰时要及时询问，稿乱后续会很麻烦。
+
+
+
+
+2.2 了解路径后，打开已完成的SAS程序，了解公司编程要求。
+
+
+一般的SAS程序结构：
+1、开头注释：
+Protocol No、
+作者、
+程序名称、
+介绍程序功能、
+版本（版本号、作者、日期、介绍）
+等信息。
+
+2、程序主体
+3、结尾日志保留 log：dm ‘log:file”D:\mylog.log 与程序同目录存存储日志目录”replace’
+
+三、TIPS
+
+
+命名、日志储存、结果储存、程序表头等这些细节要注意可读性、规范性
+
+SAS 语法 案例，SAS官网查询、软件中的帮助文档、论文、人大经管论坛 bbs.pinggu.org SAS版块；
+CDISC标准不清楚：查CDISC IG文档；
+
+四、常用函数
+.数字函数
+函数名	描述	备注
+ABS(n)	获取变量的绝对值	
+MAX(v1,v2,…)	返回多个变量的最大值	可接受缺失值
+MIN(v1,v2,…)	返回多个变量的最大值	可接受缺失值
+MOD(X,Y)	获得X除以Y的余数	
+SIGN(n)	返回变量n的正负性，值为1，-1或0	
+MEAN(v1,v2,…)	获取多个变量的平均值	可接受缺失值
+MEDIAN(v1,v2,…)	获取多个变量的中位数	可接受缺失值
+MISSING(var)	检验数据是否含有缺失值	
+N(var1,var2,…)	计算样本个数，不包括缺失值	
+NMISS(var1,var2,…)	计算样本中缺失值个数	
+STD(var1,var2,…)	计算标准差	
+STDERR(var1,var2,…)	计算标准误	
+SUM(var1,var2,…)	计算总和	可接受缺失值
+USS(var1,var2,…)	计算平方和	
+SQRT(X)	求X的平方根	只接受非负数
+ 2.字符函数
+函数名	描述	备注
+COMPBL(X)	将连续多个空格压缩为一个	
+COMPRESS(X,Y)	把字符串X中包含的所有字符串Y去掉	例:compress(‘abcde’,’e’)返回结果abcd，e被删除
+DEQUOTE(X)	去掉字符串X的引号	
+INDEX(var,string)	返回字符串string在var中的位置，如果var不包含string则返回0	常用于if条件判断if index(var,string) then…
+INDEXW(var,string)	返回单词string在var中的位置，如果var不包含string则返回0	
+LEFT(X)	去除字符串X左侧的空格，即左对齐	
+LENGTHN(X)	返回字符串X的长度	返回值为实际长度
+LOWCASE(X)	将X中的字母变为小写	
+UPCASE(X)	将字符串X中的字母变为大写	
+QUOTE(X)	给X加上一对引号	
+RANK(X)	给出字符X所对应的ASCII码值	如若X中包含多个字符，则只返回第一个的ASCII码
+REVERSE(X)	将字符串X颠倒过来	
+RIGHT(X)	将字符串X右对齐	
+SCAN(X, n)	返回字符串X中的第n个单词，单词间以空格区分	
+SUBSTR(var,start,long)	从var中的字符从n开始取出长度为long的字符	Long可以省略，则取出从start开始的所有字符
+TRANSLATE(STRING, X, Y)	将字符串STRING中的Y字符替换为X	
+TRANSRD(STRING, X, Y)	将字符串中的单词X替换为单词Y，单词间以空格区分	
+TRIM(X)	去掉字符串X的末尾的空格	
+ 3.数学函数
+函数	描述	备注
+EXP(argument)	计算指数函数的值	可用于获取e值:EXP(1)
+GAMMA(argument)	计算伽马函数的值	
+IBESSEL(nu, x, kode)	计算修正的bessel函数值	
+LGAMMA(argument)	计算伽马函数值的对数	
+LOG(argument)	自然对数函数	
+LOG2(argument)	以2为底的对数函数	LOG3则为以3为底
+LOG10(argument)	以10为底的对数函数	
+  4.随机函数
+函数	描述
+NORMAL(var)	计算服从正态分布的随机函数
+RANBIN(seed, n, p)	计算服从二项式分布的随机函数
+RANCAU(seed)	计算服从柯西分布的随机函数
+RANEXP(seed)	产生服从指数分布的随机数
+RANGAM(seed, a)	产生服从伽马分布的随机数
+RANNOR(seed)	产生服从正态分布的随机数
+RANPOI(seed, m)	产生服从Poisson分布的随机数
+RANTBL(seed, p1,..pi..pn)	由列表的概率分布产生随机数
+RANTRI(seed, h)	产生服从三角分布的随机数
+RANUNI(seed)	产生服从均匀分布的随机数
+UNIFORM(seed)	产生服从均匀分布的随机数
+  5.日期时间函数
+函数	描述	备注
+DATE()	获取当天日期	
+DATEPART(var)	从日期时间格式的数据中抽取日期	例:var=2018-12-13T05:30使用datepart(var)后获得2018-12-13
+DATETIME()	获取当前日期时间值	
+DAY(date)	从SAS日期值得出是几号	
+DHMS(date, hour, minute, second)	从日期小时分钟秒四个数值得到SAS日期时间值	
+HMS(hour, minute, second)	从小时分钟秒三个值计算一个SAS日期时间值	
+HOUR()	从SAS时间或SAS日期时间中计算小时的数值	
+INTCK(‘interval’, from, to)	计算给定时间段中的间隔的个数	例: var1=48392, var2=48396INTCK(‘day’,var1,var2)=4
+INTNX(‘interval’, start-from, increment<,>)	计算在一定时间后的SAS日期时间值	例: var=50928INTNX(‘day’,var,5)=50933
+MDY(month,day,year)	从月日年得到一个SAS日期值	
+MINUTE(time |datetime)	从时间值或日期时间值中抽取分钟值	
+MONTH(date)	从日期中得到月份	
+QTR(date)从SAS	日期值得到对应的季度	
+SECOND(time | datetime)	从SAS时间值或SAS日期时间值中得到秒	
+TIME()	计算当前时间	
+TIMEPART(var)	从日期时间值中抽取时间值	
+TODAY()	计算当前日期	
+WEEKDAY	从SAS日期值得到为星期数	1表示周日
+YEAR	由SAS日期值得到年份	
+YYQ	从年份和季度产生一个SAS日期值	
+
