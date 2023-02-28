@@ -1,0 +1,69 @@
+                                                                    临床试验行业术语
+
+
+
+一、SAP 统计分析计划书 statistical analysis plan：
+统计师创建的，记录整个试验设计和统计分析方法的文档，包括试验流程、有效性指标、试验的参与人数、中期分析、概念定义、缺失值处理、患者来访计划、重要变量定义方法等一系列跟统计相关的内容
+
+
+
+使用场景：
+1、刚刚接触一个实验，对实验还不了解，第一步阅读了解，如第几期实验，是否有随机分组等，再看原始数据
+
+2、对原始数据和统计图表有不清楚的地方时查看SAP，包含很多变量，收集的格式、结构和标准SDTM不同，是如何收集的，在哪找到，这些要参考SAP
+
+
+SAP长度有50-100页左右，目录通读下，SAP一般有模版
+
+
+二、CRF病例报告表 case report form
+收集患者信息，身高、体重、血压、来访次数等
+
+
+不同测量是横向记录的，每一条记录是每名患者每次来访测量记录，不同变量记录测量。
+SDTM是每名患者每次来访的每次测量都要占一条记录。
+需要把这些记录拉下来，做转置
+Proc transpose 转置 存入SDTM VS格式
+
+CRF原始数据，用它做成SDTM的VS标准数据集。
+需要在CRF上做标注数据点，给审核部门方便核对
+
+测量名称标记为VSTEST，要填值的地方标VSORRES
+如Height 标记 VSORRES(VSTESTCD=HEIGHT), cm标记VSORRESU
+标注的过程叫annotate，标注完的叫annotate CRF，标记的是SDTM的变量
+
+三、protocol 
+协议协定，protocol是整个临床试验设计。SAP是摘要，摘了统计分析相关的部分。便于了解临床试验的整体实验设计。
+
+
+
+四、SPEC数据集创建说明 specification
+原始数据比较乱，变量值经过了计算，SPEC文档（表格形式）用于记录原数据到SDTM怎么来的，
+
+
+
+表格的形式，
+包含内容包括：
+Variable Name：变量名称 IG文档有；
+variable label：标签 IG文档有；
+Variable type：字符 数值；
+Variable Name lengt：变量长度；
+Variable Origi：怎么来的 值有Protocol代表从protocol来的/ CRF Page来自CRF / Assigned 直接指定的 / Derived 计算得来 比如USUBJID；
+CRF page 来源于CRF的写页码；
+code list ：control terminology 列表里指定的标记；
+User notes：值要设置为什么，描述编程的过程，给检验的人来检验，SPEC由统计师编写或由领导程序员编写；
+
+做SPEC的时候对照SAP和CRF参考shell（结果输出的格式模板），把原始数据和统计分析要求弄清楚。
+
+五、Shell 统计分析图表模板
+
+
+统计分析的结果形式：
+一般会把ADaM数据集做成人看得懂的可视化分析报表，table表、figure图和listing清单，
+要保证数字正确，还要在规定的位置填写标题、脚注、页码等信息，一般会有一个输出结果的模板，规定哪里填什么，什么样式，这个输出结果的模版不是shell，表叫table shell，图figure shell，清单是listing shell，shell提供了可视化报表的样式，不是具体数值是多少。
+
+
+
+副作用table shell 例：页眉左侧公司名，右侧页码，标题两行居中，第一行表名，第二行人口
+表列名写上属于本组患者数量，数量与组名换行，不在一行。表内容 数字格式 xx(xx.x)[xx] 表示
+患者人数(患者人数占该组的百分比，保留一位小数)，表格下面的脚注也要一致。有很多细节。要注意。
