@@ -1,0 +1,130 @@
+                                                 CDISC_SAS_date_time_macro，Parallel work与数据集比较
+                                                 
+一、数据集比较
+
+Parallel work:
+Productor一成数据集和图表
+Validator用自己的程序跟生成的结果做对比
+结果完全相同
+通过
+互相不可以查看彼此的代码，只能就问题相互交互，行业规范。
+
+做对比用Proc compare
+Libname data ‘D:\’;
+Proc compare base=productordata compare=;validatordata listall;/*listall 查看全部，默认只显示50条*//*criteria=0.0001精度要求*/
+/*By usubjid;*//*可以加by语句分组查看*/
+/*id usubjid*/
+/*
+Var age;
+With age1;/*对比两个变量*/
+*/
+Run;
+
+看结果：
+
+Data Set Summary数据集基本比较：
+Dataset 数据集名称
+Nvar 变量数
+NObs观察数记录数
+
+看数字不一致的查SPEC文件，看多的变量需不需要
+
+
+Variable with Unequal values不一致值：
+Variable变量
+Ndif多少个不一样的
+
+The compare procedure具体比较：
+左侧是producer的base数据集，右侧是validator的
+打开数据集来查看哪里不一样做修改和邮件汇报哪个数据集哪里问题等
+或查SPEC 开发说明文档
+
+
+二、创建DY天数变量：
+
+/*aestdtc (adverse event start)副作用开始时间减试验开始时间/受试者参照开始时间rfstdtc (reference)得DY天数*/
+Data ae;
+Set data.ae;
+/*创建aestdy 副作用天数*/
+If aestdtc<rfstdtc then aestdy = input(scan(aestdtc,1,’T’),yymmdd10.)-input(scan(rfstdtc),yymmdd10.);/*前面一个时间含时间以T分开，can分隔只要日期*/
+Else aestdy = input(scan(aestdtc,1,’T’),yymmdd10.)-input(scan(rfstdtc),yymmdd10.)+1;
+/*创建aeendy，把上面复制修改*/
+If aestdtc<rfstdtc then aeendy= input(scan(aeendtc,1,’T’),yymmdd10.)-input(scan(rfstdtc),yymmdd10.);
+Else aeendy= input(scan(aeendtc,1,’T’),yymmdd10.)-input(scan(rfstdtc),yymmdd10.)+1;
+
+Run;
+
+/*修改化上面代码*/
+Data ae;
+Set data.ae;
+Aestdy = input(scan(aestdc,1,’T’),yymmdd10.) - input(rfstdtc,yymmdd10.)+(aestdtc>=rfstdtc);
+/*+(aestdtc>=rfstdtc)后面一步为真则为1，为假则为0，有点像三元运算符*/
+Run;
+
+/*日期是所要表示的时候和1960-01-01这个时间的差 */
+/*数值转日期格式，format 数字 yymmdd10.*/
+Data temp;
+a=2;
+Format a yymmd10.;/*把2变成日期就是和1960-01-01多两天的日期，即1960-01-03*/
+Run;
+/*数值转时间格式，format 数字 time8.*/
+Data temp2;
+a=2;
+Format a time8.;/*把2变成时间就是比0:00:00多2秒的时间，即 0:00:02*/
+Run;
+
+/*字符转数值input()，数值转字符put()*/
+/*2转成字条型时间
+A = put(2,time8.)/*可以用put直接转，后面是要转的时间格式，yymmdd10.转日期，$9.转普通数字，,best.转适长格式数字字符型*/
+/*input(‘123’,best.)字符型转数值，*input(‘1911-01-09’,yymmdd10.)……*/
+
+/*算年龄，试验开始日期-生日，开始试验时的年龄*/
+Data age;
+Set data.age;
+Age = int(input(scan(rfstdtc,1,’T’),yymmdd10.)-input(brthdtc,yymmdd10.))/365.25;/*四年一闰，所以/365,25，int()取整*/
+Run;
+
+/*宏程序：用于多次使用调用共用程序块*/
+/*做一个表*/
+Data b;
+X = 123;
+Y=”abc”;
+Run;
+
+/*写一个打印表的宏程序变打印*/
+%macro macro_name(par1);                                                                                                                
+        proc print data=&par1;                                                                                                          
+        run;                                                                                                                            
+%mend;                                                                                                                                  
+%macro_name(b); 
+
+打印sashelp中的cars
+%macro_name(sashelp.cars); 
+
+
+语法：
+定义：
+%macro 宏名称(形参);
+公用代码&形参
+%mend
+
+使用：
+%宏名称(实参);
+
+
+/*用宏改写上面的DY处理*/
+/*定义公用dy宏*/
+%macro dy(dtc_var,var_name);
+&var_name = input(scan(&dtc_var,1,’T’),yymmdd10.)-input(rfstdtc,yymmdd10.)+(&dtc_var>=rfstdtc);
+%mend;
+
+/*使用公用dy宏*/
+Data ae;
+Set data.ae;
+%dy(aestdtc,aestdy);
+%dy(aeendtc,aeendy);
+Run;
+
+一般在编写里要初始化一些之前定好的庞大的宏程序再来编写
+
+
