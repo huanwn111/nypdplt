@@ -1,6 +1,38 @@
-SAS/macro宏
+                                                             SAS/macro宏
 
-[运行可用右键快捷菜单]
+
+一、一个宏示例：
+
+/*宏程序：用于多次使用调用共用程序块*/
+/*做一个表*/
+Data b;
+X = 123;
+Y=”abc”;
+Run;
+
+/*写一个打印表的宏程序变打印*/
+%macro macro_name(par1);                                                                                                                
+        proc print data=&par1;                                                                                                          
+        run;                                                                                                                            
+%mend;                                                                                                                                  
+%macro_name(b); 
+
+打印sashelp中的cars
+%macro_name(sashelp.cars); 
+
+
+语法：
+定义：
+%macro 宏名称(形参);
+公用代码&形参
+%mend
+
+使用：
+%宏名称(实参);
+
+二、其它：
+
+[运行可用右键快捷菜单，工具栏小人儿，或运行菜单]
 %let year=2023/*定义宏变量 注意，定义宏没有引号，加引号会当成值，代码中使用 &year*/
 Data tbl&year;
 set db.tbl;/*?合并数据表*/
